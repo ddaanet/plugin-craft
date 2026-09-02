@@ -1,3 +1,5 @@
+import 'plugin-dev/release.just'
+
 # plugin-craft — dev recipes
 
 # Default: list recipes
