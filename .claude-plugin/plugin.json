@@ -1,0 +1,12 @@
+{
+  "name": "plugin-craft",
+  "version": "0.0.0",
+  "description": "Building on the Claude Code harness: authoring and debugging hooks, writing skills, and verifying that the plugin code actually running is the code you just edited.",
+  "author": {
+    "name": "David Allouche",
+    "email": "david@allouche.net"
+  },
+  "homepage": "https://github.com/ddaanet/plugin-craft",
+  "repository": "https://github.com/ddaanet/plugin-craft",
+  "license": "MIT"
+}
