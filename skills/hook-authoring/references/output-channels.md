@@ -30,10 +30,9 @@ explicitly, report on `systemMessage`, exit 0.
 
 **Blocking asymmetry** (don't conflate "don't exit 2" with "don't error"):
 
-| event | can it block? |
-|---|---|
-| `PreToolUse` | **`exit 2` blocks the tool outright.** Other non-zero → action proceeds + "hook error" notice. |
-| `PostToolUse` | **Nothing can block** — docs: *"PostToolUse hooks can't undo actions since the tool has already executed."* `exit 2` is mere feedback to the model; the exit code buys nothing. |
+**`PreToolUse` — `exit 2` blocks the tool outright.** Any other non-zero exit lets the action proceed and adds a "hook error" notice.
+
+**`PostToolUse` — nothing can block.** The docs are explicit: *"PostToolUse hooks can't undo actions since the tool has already executed."* `exit 2` is mere feedback to the model, and the exit code buys nothing.
 
 So "exit 0 on every path so we never block a Write" is over-broad reasoning that
 lands on the right answer: `exit 0` is right for *visibility*, not for

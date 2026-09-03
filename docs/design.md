@@ -17,26 +17,33 @@ Verified against: `ad180d6` (2026-09-03).
 
 ## Functional requirements
 
-| id | requirement | status | Where · pinned by |
-| --- | --- | --- | --- |
-| FR-1 | Four skills ship in one plugin, each firing on a moment a session is already in rather than on a topic word. | Done (prose) | `skills/*/SKILL.md` `description:` · — |
-| FR-2 | `hook-authoring` carries the hook stdin payload, the stdout control surface, the channel mechanics, the `PreToolUse` permission pipeline and the scripted-harness comparison. | Done (prose) | `skills/hook-authoring/` · — |
-| FR-3 | A `PreToolUse` deny is taught as splitting three ways by audience: verdict on `permissionDecisionReason`, recovery on `additionalContext`, one line on `systemMessage`. | Done (prose) | `skills/hook-authoring/SKILL.md` §2 · — |
-| FR-4 | `skill-authoring` carries description shape and its per-session cost, what `allowed-tools` grants, which second-person forms the imperative rule targets, and how a bundled script is reached when the plugin env vars are absent. | Done (prose) | `skills/skill-authoring/SKILL.md` · — |
-| FR-5 | `verifying-plugin-changes` fires on a symptom with no keyword — an edit to plugin code that appears not to work while nothing errors. | Done (prose) | `skills/verifying-plugin-changes/SKILL.md` `description:` · — |
-| FR-6 | `toolkit-release` carries only what goes wrong; the procedure stays in the vendored `plugin-dev/README.md`. | Done (prose) | `skills/toolkit-release/SKILL.md` · — |
-| FR-7 | No text under `skills/` cites the memory store — no wikilink, no `memory/` path, no bare fact filename. | Done | `scripts/check-skill-text.sh` · `just precommit` |
-| FR-8 | Every date and build version that grounds a claim survives the move from memory into skill text. | Done (prose) | all six skill files · — |
-| FR-9 | Migrated facts are retired from the `ddaanet` tier, and every pointer into them from a fact that stays is repointed at the skill that now carries the content. | Done (prose) | `memory/MEMORY.md` · — |
+**FR-1 · One plugin, four skills, each firing on a moment.** Every description names a moment a session is already in rather than a topic word. *Done (prose)* — the `description:` of each `skills/*/SKILL.md`.
+
+**FR-2 · `hook-authoring` carries the whole hook surface.** The stdin payload, the stdout control surface, the channel mechanics, the `PreToolUse` permission pipeline and the scripted-harness comparison. *Done (prose)* — `skills/hook-authoring/`.
+
+**FR-3 · A deny is taught as splitting three ways by audience.** Verdict on `permissionDecisionReason`, recovery on `additionalContext`, one line on `systemMessage`. *Done (prose)* — `skills/hook-authoring/SKILL.md` §2.
+
+**FR-4 · `skill-authoring` carries what makes a skill findable and self-sufficient.** Description shape and its per-session cost, what `allowed-tools` grants, which second-person forms the imperative rule targets, and how a bundled script is reached when the plugin env vars are absent. *Done (prose)* — `skills/skill-authoring/SKILL.md`.
+
+**FR-5 · `verifying-plugin-changes` fires on a symptom with no keyword.** An edit to plugin code that appears not to work while nothing errors. *Done (prose)* — the `description:` of `skills/verifying-plugin-changes/SKILL.md`; see L-1.
+
+**FR-6 · `toolkit-release` carries only what goes wrong.** The procedure stays in the vendored `plugin-dev/README.md`, which every consumer of the toolkit already has. *Done (prose)* — `skills/toolkit-release/SKILL.md`.
+
+**FR-7 · No shipped skill text cites the memory store.** No wikilink, no `memory/` path, no bare fact filename. *Done* — `scripts/check-skill-text.sh`, pinned by `just precommit`.
+
+**FR-8 · Every date and build version that grounds a claim survives the move.** Stripping one turns evidence into assertion, and these are the claims most likely to rot. *Done (prose)* — all six skill files.
+
+**FR-9 · Migrated facts are retired from the tier, and inbound pointers are repointed.** Every pointer into a retired fact, from a fact that stays, names the skill that now carries the content. *Done (prose)* — `memory/MEMORY.md` and the `ddaanet` tier.
 
 ## Non-functional requirements
 
-| id | requirement | status | Where · pinned by |
-| --- | --- | --- | --- |
-| NFR-1 | A skill's `description:` is injected at session start in every repo where the plugin is enabled, so its length is a recurring cost and is written to earn it. | Done (prose) | `skills/*/SKILL.md` frontmatter · — |
-| NFR-2 | Skill bodies are reachable in full at invocation. This is the property recall could not provide and the reason the content left memory. | Done (prose) | `skills/` · — |
-| NFR-3 | Release infrastructure is vendored from `claude-plugin-dev` at a `dist-` tag, never hand-written and never hand-edited. | Done | `plugin-dev/` · `plugin-dev/version-guard.sh` |
-| NFR-4 | FR-7 is enforced mechanically rather than by review, because the failure is silent for the consumer and invisible to the author. | Done | `scripts/check-skill-text.sh` · `just precommit` |
+**NFR-1 · A description is a recurring cost.** It is injected at session start in every repo where the plugin is enabled, not merely displayed, so its length is paid per session and is written to earn it. *Done (prose)* — the frontmatter of each `skills/*/SKILL.md`.
+
+**NFR-2 · Skill bodies are reachable in full at invocation.** This is the property recall could not provide and the whole reason the content left memory. *Done (prose)* — `skills/`.
+
+**NFR-3 · Release infrastructure is vendored, never hand-written.** Pinned to a `dist-` tag from `claude-plugin-dev` and never hand-edited. *Done* — `plugin-dev/`, pinned by `plugin-dev/version-guard.sh`.
+
+**NFR-4 · FR-7 is enforced mechanically rather than by review.** The failure is silent for the consumer and invisible to the author, so a reviewer catching it is not a control. *Done* — `scripts/check-skill-text.sh`, pinned by `just precommit`.
 
 ## Architecture
 
