@@ -6,10 +6,11 @@ import 'plugin-dev/release.just'
 _default:
     @just --list
 
-# Checks that run before every commit. Stub — fill in as the plugin grows.
+# Checks that run before every commit.
 precommit:
-    true
+    jq . .claude-plugin/plugin.json > /dev/null
+    bash -n scripts/*.sh
+    bash scripts/check-skill-text.sh
 
 # The gate `release` depends on. Add slow or paid checks here.
 prerelease: precommit
-    true
