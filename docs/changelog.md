@@ -2,6 +2,12 @@
 
 Design-significant changes only: decisions reversed, subsystems built or torn down, requirements added or dropped, a rationale that turned out false. Git history is the full record.
 
+## 2026-09-07 — a subtree-vendoring skill was offered and declined
+
+`claude-plugin-dev` offered its one general lesson — `git subtree` grafts a ref's root tree, so a repo shipping from a subdirectory needs a second `dist-` tag cut with `subtree split` — as a candidate skill. It was declined, and the reasoning is recorded as a rejected alternative because the offer is the kind that recurs.
+
+Grounding the brief against the tree is what settled it. The brief argued the consumer-side symptom was uncovered; `plugin-dev/README.md` states it outright, along with the mechanism, and that file ships to every consumer of the toolkit. Both call sites already refuse a source ref by name. D-5's scoping of `toolkit-release` to what the README lacks then decides the case on its own, and the only residual audience — a plugin-craft installer using `git subtree` without this toolkit — does not clear N-1's fifth-description test.
+
 ## 2026-09-03 — seeded from the ddaanet memory tier
 
 Recall delivers the first 4096 bytes of a memory file and stops. Seven of the eight facts behind this plugin were over that, so most of each body was unreachable by the mechanism meant to reach it — `hook-output-channels` at 23% reachable, `stale-plugin-code` at 45%. `stale-plugin-code` was worse than truncated: its trigger is a symptom with no token, so no index line could ever match it. That is the fact that made a plugin worth cutting rather than a further round of memory-side splitting.
