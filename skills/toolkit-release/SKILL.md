@@ -1,6 +1,6 @@
 ---
 name: toolkit-release
-description: "What goes wrong when releasing a plugin with the vendored `claude-plugin-dev` toolkit, and what to do about it: the sandbox and classifier failures that leave a release half-landed, what `error: uncommitted changes` actually excludes, and the post-pull check that catches a silently broken justfile. Use when running `just release` or `just update-plugin-dev`, when either half-lands or refuses a tree that looks clean. The happy path is in `plugin-dev/README.md`."
+description: "What goes wrong when releasing a plugin with the vendored `claude-plugin-dev` toolkit, and what to do about it: the sandbox and classifier failures that leave a release half-landed, what `error: uncommitted changes` actually excludes, why a first release cannot set its own version through the recipe, and the post-pull check that catches a silently broken justfile. Use when running `just release` or `just update-plugin-dev`, when either half-lands or refuses a tree that looks clean, or when cutting a plugin's first release. The happy path is in `plugin-dev/README.md`."
 ---
 
 # Toolkit release failure modes
@@ -21,12 +21,39 @@ already landed, so a sandboxed run leaves a half-done release rather than a
 failed one; `just resume-release`, likewise unsandboxed, completes it and is
 idempotent.
 
-## Unsandboxed is necessary, not sufficient
+The durable fix is a `just release:*` entry in `sandbox.excludedCommands`,
+which sets the unsandboxing flag on the call unconditionally. It does **not**
+auto-approve: an excluded command still goes through full permission
+validation. What it buys is that the exclusion is static, so nothing depends
+on an agent choosing to pass an override flag.
 
-The marketplace lives in a sibling repo, and the push into it is refused by
-the auto-mode classifier as an *external repo outside the trusted source
-control org* regardless of the sandbox flag, until `/add-dir` has been run on
-that repo.
+Validation applies to the command as invoked. With that exclusion in place and
+no `/add-dir` on the marketplace repo, `just release` completed including the
+marketplace push — the nested `git push` inside `release.sh` is not classified
+in its own right (verified against Claude Code 2.1.263). Issuing a cross-repo
+push directly is the case that gets refused, as an *external repo outside the
+trusted source control org*; `/add-dir` on that repo, or an allow rule, is
+what clears it. Reaching for `dangerouslyDisableSandbox` on such a call does
+not help, since that route is itself subject to the same validation.
+
+## A first release needs the version set by hand, and committed
+
+A plugin that has never been released has no previous version to bump from, so
+`just release` takes no bump argument and publishes whatever the manifest
+holds; passing one is refused. The intended version therefore has to be in
+`plugin.json` before the recipe runs, and two things obstruct putting it there.
+
+The version-guard hook denies the edit and its message says to invoke the
+recipe instead — advice that is correct in the steady state and impossible
+here, because no recipe invocation can select a version on a first release.
+And the recipe's first-release branch creates **no commit**: it tags `HEAD` and
+requires the manifest to already hold the version on a clean tree. Editing the
+manifest and going straight to `just release` therefore fails on `error:
+uncommitted changes`, from the same gate described below.
+
+The working sequence is to write the version into the manifest, commit it, then
+run `just release` with no argument. Editing a guarded file is my human
+partner's call to make, not something to route around on your own initiative.
 
 ## What `error: uncommitted changes` actually excludes
 

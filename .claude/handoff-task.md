@@ -1,5 +1,3 @@
-## Current task
+Shipping a patch release of `plugin-craft` carrying corrections to its `toolkit-release` skill, made after the first release exercised it. Two things the release settled: the marketplace push completed with no `/add-dir` and no allow rule, disproving the skill's claim that the auto-mode classifier refuses it regardless — the classifier weighs the top-level `just release`, not the `git push` nested inside `release.sh`; and a first release turns out to have no supported way to choose its version, because the version-guard denies the manifest edit while directing at a recipe that cannot select one.
 
-plugin-craft is seeded and documented: four skills under `skills/`, `scripts/check-skill-text.sh` wired into `just precommit`, and a living `docs/design.md` with its changelog beside it. The live thread is the first release.
-
-A second thread is not this repo's to drive: the sibling extraction passes for `craft` and `shell-scripting` run in parallel against the same ddaanet memory tier. `hook-output-channels` was reduced here to its section 7, which is `craft`'s source, and the inbound pointers in facts that stay were repointed at the new skills. If a parallel pass wrote those same files, it surfaces as a merge on the memory store rather than as silent loss.
+A brief on that second finding was dropped in `claude-plugin-dev`'s inbox. It is that repo's to act on, not a thread held open here.
