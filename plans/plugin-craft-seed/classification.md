@@ -2,7 +2,7 @@
 
 ## Requirements-clarity gate
 
-- **Requirements source:** `brief-plugin-craft-seed.md` + `brief-additionalcontext-survives-deny.md` (both tracked/untracked at repo root)
+- **Requirements source:** `brief-plugin-craft-seed.md` + `brief-additionalcontext-survives-deny.md` (both in this directory)
 - **Completeness:** concrete mechanism per requirement: Y — the seed brief names the four skills, their source files, the §7 split point, the description shape, the wikilink resolution list and the date-preservation rule; the companion brief names the exact §2 amendment, the three channels and their audiences, and the CC build it was verified on. Measurable criteria: Y — byte sizes, the 4096-byte recall cap, named files on disk.
 - **Routing:** Proceed to triage. One item is explicitly left open by the brief (skill 4) and is carried as a contingent decision, not a requirements gap.
 
