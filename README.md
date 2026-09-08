@@ -38,9 +38,11 @@ work while nothing errors — which is exactly the trigger a memory index line
 could never match.
 
 **`toolkit-release`** — what goes wrong when releasing a plugin with the
-vendored `claude-plugin-dev` toolkit: the sandbox and classifier failures that
-leave a release half-landed, what `error: uncommitted changes` actually
-excludes, and the post-pull check that catches a silently broken justfile. The
+vendored `claude-plugin-dev` toolkit: the sandbox failure that leaves a release
+half-landed rather than failed, what the permission classifier does and does not
+refuse, what `error: uncommitted changes` actually excludes, why a first release
+cannot choose its own version through the recipe, and the post-pull check that
+catches a silently broken justfile. The
 happy path stays in the toolkit's own `plugin-dev/README.md`, which every
 consumer already has.
 

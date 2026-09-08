@@ -2,6 +2,14 @@
 
 Design-significant changes only: decisions reversed, subsystems built or torn down, requirements added or dropped, a rationale that turned out false. Git history is the full record.
 
+## 2026-09-08 — the first release disproved one of the skills it exercised
+
+Cutting v0.1.0 was the first occasion any session needed `toolkit-release`, and it falsified a section. The skill claimed the marketplace push is refused by the permission classifier as an external repo "regardless of the sandbox flag, until `/add-dir` has been run." The push completed with neither `/add-dir` nor an allow rule configured. What the classifier weighs is the command as invoked, so a `git push` nested inside `release.sh` is not judged in its own right; the refusal is real, but only for a push an agent issues directly. The shared memory fact asserting the stronger claim was corrected in the same pass.
+
+The release also surfaced a gap nothing documents: a first release publishes the manifest version verbatim and refuses a bump argument, while the version-guard hook denies the manifest edit and directs at a recipe that cannot select a version there. The only working path is a hand edit committed before the recipe runs. That is a defect in the release toolkit rather than here, so it went to that repo as a brief and is recorded in the skill as a workaround, flagged for removal once the toolkit closes it.
+
+The general lesson is the one the plugin's own thesis predicts: prose describing a failure mode is a hypothesis until a session runs it. Two of the four skills had never been read by a session that needed them.
+
 ## 2026-09-07 — a subtree-vendoring skill was offered and declined
 
 `claude-plugin-dev` offered its one general lesson — `git subtree` grafts a ref's root tree, so a repo shipping from a subdirectory needs a second `dist-` tag cut with `subtree split` — as a candidate skill. It was declined, and the reasoning is recorded as a rejected alternative because the offer is the kind that recurs.
