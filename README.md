@@ -53,22 +53,26 @@ content that was vendored at the time.
 
 ## Installing in a plugin
 
-Clone the toolkit at its newest **source** tag to get the script, then
-run `install.sh` from the plugin's root directory; it resolves and
-vendors the newest **dist** tag itself:
+Resolve the newest **dist** tag, fetch that tag's `install.sh`, and run
+it from the plugin's root directory:
 
 ```sh
-url=git@github.com:ddaanet/claude-plugin-dev.git
-tag=$(git ls-remote --tags --refs --sort=-v:refname "$url" 'v*' \
-        | head -1 | sed 's|.*/||')
-git clone --depth 1 -b "$tag" "$url" /tmp/cpd
+repo=ddaanet/claude-plugin-dev
 cd /path/to/your/plugin
-bash /tmp/cpd/toolkit/install.sh
+tag=$(git ls-remote --tags --refs --sort=-v:refname \
+        "https://github.com/$repo.git" 'dist-v*' | head -1 | sed 's|.*/||')
+curl -fsSL "https://raw.githubusercontent.com/$repo/$tag/install.sh" \
+    | bash -s -- "$tag"
 ```
 
+A `dist-` tag's root tree *is* `toolkit/`, so that URL serves the same
+`install.sh` the plugin is about to vendor, at the same ref. Handing the
+resolved tag to the script keeps the two in lockstep and saves it a
+second `ls-remote`.
+
 This block never names a version, so it cannot go stale. To pin an older
-version, pass its dist tag explicitly: `bash /tmp/cpd/toolkit/install.sh
-dist-vX.Y.Z`.
+version, substitute its dist tag in both places. The first install needs
+`curl`; nothing else here does.
 
 `install.sh` does three things:
 
@@ -122,8 +126,8 @@ git commit -m "add claude-plugin-dev toolkit"
 ## Updating in a plugin
 
 ```sh
-just update-plugin-dev                # newest dist tag on the remote
-just update-plugin-dev dist-vX.Y.Z   # or pin one
+just update-plugin-dev                 # newest dist tag on the remote
+just update-plugin-dev dist-vX.Y.Z     # or pin one
 ```
 
 To see what is available:
@@ -143,6 +147,18 @@ recipe) ships a note at `plugin-dev/migrations/vX.Y.Z.md`. After the
 pull, every note in the crossed version range is printed. Apply them by
 hand: the update itself never edits files outside `plugin-dev/`.
 
+**Then run `just --list` before considering the pull done.** A toolkit
+version that requires a consumer-side change — the `prerelease` recipe
+was one — makes `just` refuse to compile *any* recipe, so nothing in
+your justfile works and nothing announces it. The breakage surfaces at
+the next unrelated recipe run, which may be days later and will look
+unrelated to the update. A note is optional per release, so this check
+stands whether or not one was printed.
+
+Land the consumer-side fix as its own commit, separate from the
+subtree-pull merge commit. The merge is toolkit content; the fix is your
+plugin's own.
+
 A plugin vendored before dist refs existed carries the toolkit's leaked
 working environment under `plugin-dev/` — most visibly a `plugin-dev/memory`
 gitlink that makes a bare `git submodule status` fail for the whole repo.
@@ -158,9 +174,17 @@ of it in the same commit.
   and the release recipe's own pre-flight check.
 - A plugin that has never been released has nothing to bump from, so
   its **first** `just release` — with no bump argument — publishes the
-  version `plugin.json` already holds. Set that version before the
-  first release; passing a bump there is refused. Afterwards the
-  last-released rule above applies as normal.
+  version `plugin.json` already holds. That state is detected by tag
+  alone: no `vX.Y.Z` tag exists here or on origin. The marketplace
+  entry plays no part, so a plugin already listed there can still take
+  its first release. The version published is usually whatever
+  `/plugin-dev:create-plugin` seeded into the manifest; to ship a
+  different one, set `.version` and **commit** that edit before
+  releasing — `.claude-plugin/` is not exempt from the clean-tree
+  check. That edit is the maintainer's to make, and the one the
+  version-guard hook refuses from an agent. Passing a bump on a first
+  release is refused. Afterwards the last-released rule above applies
+  as normal.
 - Default branch is auto-detected from `origin/HEAD`; recipes don't
   hardcode `main`.
 - The version-guard hook fires on Write/Edit events targeting
