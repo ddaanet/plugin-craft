@@ -1,14 +1,5 @@
 # plugin-craft — design
 
-Status: seeded, unreleased.
-Verified against: `ad180d6` (2026-09-03).
-
-## Now
-
-**Focus** — nothing in flight. The four skills are written, reviewed and committed; the sources they were cut from are retired from the shared `ddaanet` memory tier.
-
-**Next** — add the `plugin-craft` row to `ddaanet/claude-plugins`' `marketplace.json` and cut the first release. `just check-version` reports the entry missing until then, which is the expected pre-release state; the release recipe creates the row itself.
-
 **Do not re-litigate** — the plugin boundary (D-1), the §7 split point (D-2), the failure-mode scoping of `toolkit-release` (D-5), and the presence of `my human partner` phrasing in shipped skill text (D-9).
 
 ## Status legend
