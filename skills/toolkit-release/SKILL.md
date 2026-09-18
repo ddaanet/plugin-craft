@@ -1,6 +1,6 @@
 ---
 name: toolkit-release
-description: "What goes wrong when releasing a plugin with the vendored `claude-plugin-dev` toolkit, and what to do about it: the sandbox and classifier failures that leave a release half-landed, what `error: uncommitted changes` actually excludes, why a first release cannot set its own version through the recipe, and the post-pull check that catches a silently broken justfile. Use when running `just release` or `just update-plugin-dev`, when either half-lands or refuses a tree that looks clean, or when cutting a plugin's first release. The happy path is in `plugin-dev/README.md`."
+description: "What goes wrong when releasing a plugin with the vendored `claude-plugin-dev` toolkit, and what to do about it: the sandbox and classifier failures that leave a release half-landed, what `error: uncommitted changes` actually excludes, the push-route rewrite no preflight catches, and the post-pull check that catches a silently broken justfile. Use when running `just release` or `just update-plugin-dev`, when either half-lands, refuses a tree that looks clean, or fails in its gate before publishing anything. The happy path is in `plugin-dev/README.md`."
 ---
 
 # Toolkit release failure modes
@@ -27,6 +27,15 @@ auto-approve: an excluded command still goes through full permission
 validation. What it buys is that the exclusion is static, so nothing depends
 on an agent choosing to pass an override flag.
 
+The classifier also weighs whether the release is what the user asked for.
+Reached for on the agent's own initiative — mid-way through executing a task
+file, with no user message naming a release — `just release minor` was denied
+outright as *[Create Public Surface]*, with the exclusion in place; a denial,
+not a prompt, so nothing had started and nothing half-landed. The recovery is
+to report it and let the user re-instruct, naming the release. Two runs are the
+whole evidence, from different repositories ten days apart, so read this as the
+shape of the risk rather than a decision rule.
+
 Validation applies to the command as invoked. With that exclusion in place and
 no `/add-dir` on the marketplace repo, `just release` completed including the
 marketplace push — the nested `git push` inside `release.sh` is not classified
@@ -36,38 +45,36 @@ trusted source control org*; `/add-dir` on that repo, or an allow rule, is
 what clears it. Reaching for `dangerouslyDisableSandbox` on such a call does
 not help, since that route is itself subject to the same validation.
 
-## A first release needs the version set by hand, and committed
+## The push-route check has a stated gap
 
-A plugin that has never been released has no previous version to bump from, so
-`just release` takes no bump argument and publishes whatever the manifest
-holds; passing one is refused. The intended version therefore has to be in
-`plugin.json` before the recipe runs, and two things obstruct putting it there.
+`common_preflight` refuses when `remote.origin.pushurl`,
+`branch.<name>.pushRemote` or `remote.pushDefault` is set, because each sends
+the push somewhere `git ls-remote origin` does not read. A
+`url.<base>.pushInsteadOf` rewrite produces the same split and is **not**
+checked: the release publishes to the rewritten repository while every probe
+reads the original. Checking it was declined deliberately — the rewrite fires
+only when its base prefixes origin's URL, a non-matching base is inert, and a
+global rewrite is an ordinary thing to have configured, so refusing on presence
+would be wrong. Rule it out by hand before releasing on a machine that carries
+one. Plain `url.<base>.insteadOf` needs no check: it rewrites fetch and push
+alike.
 
-The version-guard hook denies the edit and its message says to invoke the
-recipe instead — advice that is correct in the steady state and impossible
-here, because no recipe invocation can select a version on a first release.
-And the recipe's first-release branch creates **no commit**: it tags `HEAD` and
-requires the manifest to already hold the version on a clean tree. Editing the
-manifest and going straight to `just release` therefore fails on `error:
-uncommitted changes`, from the same gate described below.
+## A failing gate is not a failed release
 
-The working sequence is to write the version into the manifest, commit it, then
-run `just release` with no argument. Editing a guarded file is my human
-partner's call to make, not something to route around on your own initiative.
+`release` depends on `prerelease`, so a gate failure aborts the run before
+anything public happens — correct behaviour that looks identical to a release
+that broke. Piping the recipe through `tail` compounds it by masking the real
+exit status. Re-run the gate on its own before concluding anything about the
+tree or the toolkit.
 
-## What `error: uncommitted changes` actually excludes
+## `error: uncommitted changes` names its own exemptions
 
-`release.sh`'s `tree_is_clean` gates on `git diff --quiet HEAD` with two
-pathspec exclusions: `.claude` (agent working state — task frames staged for
-"whatever commit lands next", `settings.json`) and
-the gitlore memory mount path, read from `.gitmodules` by the submodule name
-`gitlore-memory`. `.claude-plugin` is **not** excluded — git pathspecs match
-at the path separator — so a dirty manifest still refuses. Anything staged
-under `.claude` rides the release commit. The same check runs against
-`MARKETPLACE_DIR`, where an unrelated dirty file fails the release at its
-last step. A consumer whose vendored `plugin-dev/` predates the `.claude`
-exclusion still refuses on a staged frame; read its `tree_is_clean` before
-blaming the tree.
+The refusal prints the dirty paths and the exclusions it actually applied — for
+the plugin repo and for `MARKETPLACE_DIR` alike, the latter with what a dirty
+marketplace repo means for a run that already got that far — so read it rather
+than reconstructing the rule. One thing it does not say: `.claude` is exempt
+from the check but not from the commit. The release commit takes the whole
+index, so anything staged under `.claude` rides it.
 
 ## Check `just --list` after a subtree pull
 

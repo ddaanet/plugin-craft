@@ -2,6 +2,14 @@
 
 Design-significant changes only: decisions reversed, subsystems built or torn down, requirements added or dropped, a rationale that turned out false. Git history is the full record.
 
+## 2026-09-17 — the toolkit closed the first-release gap, and the section went with it
+
+Toolkit 0.8.0 landed the fix for the gap the first release surfaced: detection is by tag alone, the version-guard hook's message branches on that predicate and names the maintainer's edit rather than a recipe that cannot select a version, and the shipped README documents setting the version and committing it. D-5's reopen-if fired as written, so `toolkit-release`'s first-release section was deleted rather than updated — what it carried is now in a file every consumer of the toolkit already has.
+
+The same pull settled a second candidate the same way. An unreadable `marketplace.json` used to reach `create_github_release` on `--resume` and die in the marketplace bump, leaving a public release; 0.8.0 refuses it before any side effect, so there is no half-landing left for the skill to describe. Two additions did earn their place, both being things no shipped file states: `url.<base>.pushInsteadOf` sends the release to a rewritten repository while every preflight probe reads the original, and is left unchecked deliberately because refusing on presence does not generalize; and a `prerelease` failure aborts before anything public while looking exactly like a broken release, which piping the recipe through `tail` makes worse by masking the exit status.
+
+The pattern worth keeping is that a skill scoped to a gap shrinks when the gap closes. Documenting the old behaviour for consumers pinned to an older toolkit was considered and dropped: the remedy for them is the pull, not a second description.
+
 ## 2026-09-08 — the first release disproved one of the skills it exercised
 
 Cutting v0.1.0 was the first occasion any session needed `toolkit-release`, and it falsified a section. The skill claimed the marketplace push is refused by the permission classifier as an external repo "regardless of the sandbox flag, until `/add-dir` has been run." The push completed with neither `/add-dir` nor an allow rule configured. What the classifier weighs is the command as invoked, so a `git push` nested inside `release.sh` is not judged in its own right; the refusal is real, but only for a push an agent issues directly. The shared memory fact asserting the stronger claim was corrected in the same pass.
