@@ -160,8 +160,17 @@ So the root must be resolved **in a hook** and handed over. Two transports:
   start can name a repo the session was never in, silently, until something
   refuses.
 
-**Canonical pattern:** put a uniquely-named thin shim in the plugin's `bin/`
-(`exec bash "$(dirname "$0")/../scripts/real.sh" "$@"`), keep logic in
-`scripts/`, and have the skill body invoke the shim by bare name. No hook
-required for "skill body must run a bundled script." Use a hook only when no
-agent action is needed on the result.
+**Canonical pattern:** put the script itself, uniquely named, in the plugin's
+`bin/`, and have the skill body invoke it by bare name — PATH is shared across
+every enabled plugin, so the name has to be unique. Keeping logic in
+`scripts/` buys testability of individual components; it is not co-location
+with the skill and not something the `bin/`-on-PATH mechanism needs. So a
+simple script with one entry point gets no shim, and the split — a thin
+`bin/` shim (`exec bash "$(dirname "$0")/../scripts/real.sh" "$@"`) over
+`scripts/` — is the escalation for logic that has grown components worth
+testing on their own. The shim costs a second file and a `dirname "$0"` hop
+that resolves wrongly when the shim *file* is reached through a symlink from
+another directory (measured 2026-09-24; a symlinked `bin/` directory is fine,
+since `..` is resolved after the link). No hook required for "skill body must
+run a bundled script." Use a hook only when no agent action is needed on the
+result.
