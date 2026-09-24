@@ -48,6 +48,20 @@ fired them again. A hook that stashes a pre-state at `PreToolUse` and consumes
 it at `PostToolBatch` therefore has a *per-batch* baseline — treating it as
 per-turn overstates how long a stash lives.
 
+**Every hook matching one event runs in parallel, in no specified order.** The
+docs say so outright — *"All matching hooks run in parallel"*
+(`code.claude.com/docs/en/hooks.md`, fetched 2026-09-24) — and it holds across
+plugins and between the entries of one `hooks.json`. Registration order is not
+an ordering, and hooks get designed against one anyway (observed 2026-09-18: a
+report relay that assumed it). Two shapes break. A shared file that each hook
+read-merge-writes loses the loser's content silently — give each writer a file
+of its own, so there is nothing to serialize. A consumer step placed in each of
+two hooks emits everything twice on a batch that fires both — a consumer belongs
+in one hook of its own. A suite that runs the hooks one after the other is green
+across both defects and their fixes, since a fixed order cannot show a race:
+start the hooks concurrently, or arrange the input so that the losing
+interleaving is the only one possible.
+
 **No hook event carries token counts**, and `PostToolBatch` is the only event
 that fires *inside* a turn. Verified 2026-07-31 on 2.1.220 by nested `claude -p`
 runs. There is no context percentage or window size on any payload, so context

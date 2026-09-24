@@ -113,7 +113,8 @@ Route user-facing notices through `systemMessage`, not stderr-on-exit-0 and **no
 ## 4 · Routing
 
 - **`permissionDecision`, `updatedInput`, the auto-mode classifier,
-  `updatedToolOutput`, or emitting file bodies the agent must edit** →
-  `references/output-channels.md`.
-- **What arrives on stdin, or which harness (`--print`, the Agent SDK) fires
-  which event** → `references/input-and-harness.md`.
+  `updatedToolOutput`, a guard that must fail closed, or emitting file bodies
+  the agent must edit** → `references/output-channels.md`.
+- **What arrives on stdin, which harness (`--print`, the Agent SDK) fires
+  which event, or two hooks on one event sharing a file or a step** →
+  `references/input-and-harness.md`.

@@ -32,6 +32,14 @@ explicitly, report on `systemMessage`, exit 0.
 
 **`PreToolUse` — `exit 2` blocks the tool outright.** Any other non-zero exit lets the action proceed and adds a "hook error" notice.
 
+The corollary for a guard under `set -e`: when its first step is a `jq` parse of
+the payload, a malformed payload kills the script with jq's own status — 5 on
+jq 1.7 for `{`, for `not json` and for a well-formed non-object such as `"str"`
+(re-measured 2026-09-24) — and 5 is not 2, so **the guard fails open**. A guard
+that must fail closed catches the parse failure and exits 2 itself. Empty stdin
+is the other gap: jq exits 0 and prints nothing, so no status check ever sees
+it, and the guard has to test the extracted field for emptiness.
+
 **`PostToolUse` — nothing can block.** The docs are explicit: *"PostToolUse hooks can't undo actions since the tool has already executed."* `exit 2` is mere feedback to the model, and the exit code buys nothing.
 
 So "exit 0 on every path so we never block a Write" is over-broad reasoning that
