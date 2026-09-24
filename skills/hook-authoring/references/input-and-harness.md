@@ -32,6 +32,32 @@ Beyond the classic events the input union covers `WorktreeCreate {name}`,
 `StopFailure`, `PermissionRequest`, `PermissionDenied`, `MessageDisplay`,
 `Elicitation`/`ElicitationResult`, `TaskCreated`/`TaskCompleted`.
 
+**A Bash call that exits non-zero fires `PostToolUseFailure`, never
+`PostToolUse`.** `PostToolUse` fires only on success and carries
+`tool_response`; the failure event carries the result as one `error` string.
+Each call fires exactly one of the two, and both accept
+`hookSpecificOutput.additionalContext`. The Bash tool merges stderr into stdout
+in emission order, sandboxed and unsandboxed alike: on success
+`tool_response.stdout` holds both streams interleaved and `tool_response.stderr`
+is `""` — the field exists in the schema and arrives empty — and on failure
+`error` is the `Exit code N` line followed by that merged output. Both texts are
+byte-identical to the `tool_result` content the model sees; the transcript's
+`toolUseResult` string for a failure prepends `Error: `, the payload does not.
+`tool_input.dangerouslyDisableSandbox` is absent when unset, not `false`; when
+set it is `true`, and `PostToolUse` echoes it into `tool_response`. A sandboxed
+write refused by the allowlist (a read-only filesystem error on a path directly
+under `/tmp/`) carried no sandbox-violation annotation in the payload or in the
+model's result; a network denial was not tested. Schemas read from the CC
+2.1.280 bundle, payloads recorded live on 2.1.280, 2026-09-23. Unrecorded: what
+`cwd` holds after a `cd` inside the call, and whether output the harness
+truncates or persists arrives whole or as the model-visible preview.
+
+**How to apply:** a hook that reads Bash output registers on both events and
+takes `error` on a failure and `tool_response.stdout` on a success; a hook that
+looks for an error message in `stderr` alone reads nothing. A command piped
+through `tail` or ending in `|| true` reports exit 0 and arrives on
+`PostToolUse`, so neither event alone is "the failures".
+
 `tool_input.file_path` on `Write`/`Edit` is **not** always absolute, whatever
 the tool's own contract says. `PreToolUse` sees what the model emitted, before
 any harness normalization, so a path guard that assumes a leading `/` — a
