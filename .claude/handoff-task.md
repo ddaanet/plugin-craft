@@ -1,3 +1,0 @@
-Shipping a patch release of `plugin-craft` carrying corrections to its `toolkit-release` skill, made after the first release exercised it. Two things the release settled: the marketplace push completed with no `/add-dir` and no allow rule, disproving the skill's claim that the auto-mode classifier refuses it regardless — the classifier weighs the top-level `just release`, not the `git push` nested inside `release.sh`; and a first release turns out to have no supported way to choose its version, because the version-guard denies the manifest edit while directing at a recipe that cannot select one.
-
-A brief on that second finding was dropped in `claude-plugin-dev`'s inbox. It is that repo's to act on, not a thread held open here.

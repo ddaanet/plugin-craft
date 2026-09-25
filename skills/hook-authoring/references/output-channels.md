@@ -5,7 +5,15 @@
 - **`systemMessage`** (top-level field) — the user-visible channel, and the
   field for anything the human should see. Verified on `SessionStart`,
   `PostToolUse` and `PreToolUse`, the last rendering as
-  `PreToolUse:<Tool> says: <text>` (see `SKILL.md` §2).
+  `PreToolUse:<Tool> says: <text>` (see `SKILL.md` §2). Rendered with ANSI
+  escapes interpreted, not as literal bytes, and Claude Code dims ordinary hook
+  chatter — so a hook that speaks only when something went wrong leads its line
+  with a style reset (`$'\033[0m'`) and is read at normal weight rather than
+  as noise. A hook that speaks every time and resets every time defeats the
+  dimming for everyone. The `handoff` plugin's `scripts/report-watcher-failure.sh`
+  does this (checked 2026-09-21); the observation carries no CC version, so
+  re-probe with `{"systemMessage": "\u001b[0mplain \u001b[1mbold"}` before
+  relying on it. What the line says is `craft:directive-writing`'s.
 - **`hookSpecificOutput.additionalContext`** — injected into the model's context
   only; **never echoed to the user**. Silent by design. Honoured on
   **`PreToolUse` as well as `PostToolUse`** (both verified 2026-07-17 via nested
