@@ -7,7 +7,7 @@ _default:
     @just --list
 
 # Checks that run before every commit.
-precommit:
+precommit: check-refs
     jq . .claude-plugin/plugin.json > /dev/null
     bash -n scripts/*.sh
     bash scripts/check-skill-text.sh

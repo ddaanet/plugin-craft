@@ -50,17 +50,14 @@ consumer already has.
 
     just precommit
 
-Validates the plugin manifest, syntax-checks `scripts/`, and runs
-`scripts/check-skill-text.sh` — which fails on any shipped skill text that cites
-the memory store the skills were cut from, since a wikilink or a `memory/` path
-resolves to nothing on a consumer's machine and the failure is silent for them
-and invisible to the author.
+The commit gate, required before every commit.
 
 `plugin-dev/` is generated content, vendored by `git subtree` at a `dist-` tag.
 Changes go to [claude-plugin-dev](https://github.com/ddaanet/claude-plugin-dev)
 and arrive here through `just update-plugin-dev`.
 
-See `docs/design.md` for the design and `docs/changelog.md` for how it got there.
+The design is in the
+[design document](https://github.com/ddaanet/plugin-craft/blob/main/docs/design.md).
 
 ## License
 
