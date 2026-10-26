@@ -98,13 +98,13 @@ about one case also reads as the instruction for the others. And it spends the
 directive's length budget on branches that do not apply, which gets the live act
 shortened to fit.
 
-**Example, a hook.** A `PostToolUse` verdict told the agent: if the build died,
-clean the files it left half-written; if the call only read a log file, re-run
-the command that wrote it; for a settings file, use the settings skill. All
-three conditions were decidable from `tool_input` — the command text and the
-path. The hook should branch on them and emit the single matching instruction.
-Two reviewers passed the three-branch version, so review does not catch this;
-the script's author has to.
+**Example, a hook** (illustrative; details changed from the incident). A
+`PostToolUse` verdict told the agent: if the build died, clean the files it left
+half-written; if the call only read a log file, re-run the command that wrote
+it; for a settings file, use the settings skill. All three conditions were
+decidable from `tool_input` — the command text and the path. The hook should
+branch on them and emit the single matching instruction. Two reviewers passed
+the three-branch version; the maintainer caught it.
 
 **Example, a skill body.** "If the tree is dirty, commit first" asks the agent
 to check what `git status --porcelain` already reports. Have the bundled script
