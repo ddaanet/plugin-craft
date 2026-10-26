@@ -55,18 +55,20 @@ discarding the status fails closed and propagating it fails open. If `set -e`
 reaches any command after the deny is decided — a probe, a lookup, a listing
 that only picks between two refusal wordings — the hook exits with a status
 other than 2 and prints nothing on stdout. Claude Code reads that as a
-non-blocking error and the refused call goes ahead, with nothing shown to the
-user or the agent. Measured (by 2026-09-17; CC version not recorded): a `git` listing after the deny, with
-`CLAUDE_PROJECT_DIR` not a repository, exits 128 with empty stdout and empty
-stderr; `grep` missing from `PATH` gives 127, an OOM-killed child 137, a failing
-filter 2.
+non-blocking error and the refused call goes ahead, the hook having printed
+nothing on either stream. Measured (by 2026-09-17; CC version not recorded): a
+`git` listing after the deny, with `CLAUDE_PROJECT_DIR` not a repository, exits
+128 with empty stdout and empty stderr. Other statuses reach the same state but
+were not measured: `grep` missing from `PATH` (127), an OOM-killed child (137), a
+failing filter (2).
 
 - A bare `|| true` on a command whose output feeds only the *wording* of an
   already-decided refusal is correct. Narrowing it to the one error the author
   had in mind brings the bypass back.
 - A status read in an `if` condition is safe; a branch body is errexit-live.
   `status=$?` must be the first statement of an `else` branch — one `test`
-  command above it clobbers `$?` and kills the hook (exit 1, no stdout).
+  command above it clobbers `$?` and, when false, kills the hook (exit 1, no
+  stdout).
 - A green suite proves nothing here. Add a test that stubs the post-decision
   command to fail and asserts the hook still exits 0 with its decision JSON on
   stdout; without it the bypass stays invisible.
@@ -141,13 +143,25 @@ never looked at. Emit `updatedInput` on its own and let the pipeline decide;
 there is no turn cost, since the rewrite still saves the block-and-reissue turn
 and a read-only tail is auto-allowed locally anyway.
 
+Not probe-observable from inside a session: deny and ask rules are re-checked
+under `allow` too, so neither discriminates, classifier verdicts are not
+persisted, and a Bash `toolUseResult` carries no permission decision — the
+bypass leaves no trace in the transcript. The durable check is a unit assertion
+that the key is **absent**; an assertion written against the working output
+will instead *require* the bypass. Two plugins shipped this:
+`unsandbox-git-status` (retired 2026-08-26, confirmed live with
+`true && git status --porcelain` running unchecked) and `cwd-safety` (its `cd`-restore
+rewrite, fixed 2026-08-28). One matching `excludedCommands` segment
+unsandboxes the whole call, statically, and does not auto-approve it.
+
 **A rewrite that prefixes the command stops matching the user's prefix allow
 rule.** `export X=…; cmd` and `X=… cmd` no longer match `Bash(cmd:*)`: the user
 is prompted interactively, and a headless `-p` run is denied. Dropping the
 decision is still right; the cost lands on rules, not on the classifier.
 Measured with `claude -p --permission-mode default --output-format json`,
 reading `.permission_denials` (CC 2.1.29x, 2026-10-15), `git commit` standing in
-for the command:
+for the command. The agent typed each command directly; that a hook's rewrite
+meets the same match rests on the bundle read above, not on this measurement.
 
 | allowedTools | command | result |
 | --- | --- | --- |
@@ -156,9 +170,10 @@ for the command:
 | `Bash(git commit:*)` | `git commit …` | allowed |
 | `Bash(git commit:*)`, `Bash(export X=*)` | `export X=/p; git commit …` | allowed |
 
-Two ways out: document the extra `Bash(export VAR=*)` rule for users, or rewrite
-so the command still starts with the program's name — pass the value as an
-argument.
+Two ways out. For the `export` form, document the extra `Bash(export VAR=*)`
+rule for users; no rule for the `X=… cmd` form was measured. For either form,
+rewrite so the command still starts with the program's name — pass the value as
+an argument.
 
 Three pitfalls each produced a false pass when probing this:
 
@@ -172,17 +187,6 @@ Three pitfalls each produced a false pass when probing this:
   `--setting-sources project`, and keeps answering `allow` for the real
   command. The transcript's `hook_success` attachments show which hook decided;
   probe the same command shape with a program no installed hook matches.
-
-Not probe-observable from inside a session: deny and ask rules are re-checked
-under `allow` too, so neither discriminates, classifier verdicts are not
-persisted, and a Bash `toolUseResult` carries no permission decision — the
-bypass leaves no trace in the transcript. The durable check is a unit assertion
-that the key is **absent**; an assertion written against the working output
-will instead *require* the bypass. Two plugins shipped this:
-`unsandbox-git-status` (retired 2026-08-26, confirmed live with
-`true && git status --porcelain` running unchecked) and `cwd-safety` (its `cd`-restore
-rewrite, fixed 2026-08-28). One matching `excludedCommands` segment
-unsandboxes the whole call, statically, and does not auto-approve it.
 
 **The classifier scores safety, not convention** — it passes an unprompted
 `Edit` of a pre-existing file in a sibling repo even against a CLAUDE.md rule
