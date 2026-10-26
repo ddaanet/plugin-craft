@@ -166,7 +166,9 @@ unchanged code by a failed assertion.
 Review: one reviewer (Sonnet floor, one rung above the implementer) for
 steps 2 to 5 together; step 1 is prose and needs none.
 
-## Decisions pending
+## Decisions
+
+My human partner accepted every default below on 2026-10-26.
 
 1. **Ship a hook at all, or prose only (O4)?** Default: ship the hook. The
    incident was an agent that had the prose available, and the trigger
