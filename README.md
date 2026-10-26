@@ -30,7 +30,10 @@ hooks Claude Code drops.
 **`skill-authoring`** — what makes a skill findable and self-sufficient:
 description shape and its per-session cost, what `allowed-tools` grants, which
 second-person forms the imperative rule targets, and how a bundled script is
-reached when the plugin environment variables are absent.
+reached when the plugin environment variables are absent. It also covers
+keeping out of agent-facing text, a skill body or a hook's `additionalContext`,
+any conditional a script could have decided. The bundled-script material sits
+in a reference file behind the hub.
 
 **`verifying-plugin-changes`** — confirming the plugin code actually running is
 the code you just edited: which reload path refreshes a skill body, a hook, a

@@ -62,7 +62,6 @@ awk_prog='
         report($0, NR, 0)
     } else if ($0 ~ /^[ \t\r]*$/) {
         flush()
-        report($0, NR, 0)
     } else {
         nbuf++; buf[nbuf] = $0; num[nbuf] = NR
     }
@@ -149,8 +148,9 @@ function mask(s,   out, i, j, k, m, n, len, c, d, t, found) {
 }
 '
 
-status=0 hits=0
+status=0 hits=0 files=0
 while IFS= read -r -d '' f; do
+    files=$((files + 1))
     CST_PATTERN="$pattern" awk "$awk_prog" "$f"
     case $? in
         0) ;;
@@ -160,4 +160,5 @@ while IFS= read -r -d '' f; do
 done < <(find "$root" -type f -name '*.md' -print0)
 
 [ "$hits" -eq 0 ] || printf '\nskill text must not cite the memory store; inline the criteria instead\n' >&2
+[ "$status" -ne 0 ] || printf 'check-skill-text: no wikilinks outside code, memory/ paths or source-fact filenames in %d files\n' "$files"
 exit "$status"

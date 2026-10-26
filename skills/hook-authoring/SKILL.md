@@ -106,11 +106,12 @@ learned.
 
 Per event: `UserPromptSubmit` → `additionalContext`. `PreToolUse` →
 `additionalContext` **and** `permissionDecisionReason` on a deny (§2), plus
-`systemMessage` for the human; stderr + exit 2 also surfaces. `PostToolUse` → `additionalContext`; stderr + exit 2 feeds back to the
-model. `PostToolBatch` → `additionalContext` with exit 0; exit 2 ends the turn
-and any other non-zero is invisible to the agent
-(`references/output-channels.md` §1). `PostToolUseFailure` routes the same way, and a non-zero Bash exit fires
-it instead of `PostToolUse` (`references/input-and-harness.md`).
+`systemMessage` for the human; stderr + exit 2 also surfaces. `PostToolUse` →
+`additionalContext`; stderr + exit 2 feeds back to the model.
+`PostToolUseFailure` routes the same way, and a non-zero Bash exit fires it
+instead of `PostToolUse` (`references/input-and-harness.md`). `PostToolBatch` →
+`additionalContext` with exit 0; exit 2 ends the turn and any other non-zero is
+invisible to the agent (`references/output-channels.md` §1).
 
 Route user-facing notices through `systemMessage`, not stderr-on-exit-0 and **not** via the agent —
 `additionalContext` saying "tell the user…" is model-dependent on the hot path.

@@ -182,11 +182,11 @@ check() {
     [[ "$output" != *"SKILL.md"* ]]
 }
 
-@test "clean text exits 0 with no output" {
+@test "clean text exits 0 with a sign-off naming the checks and file count" {
     write_skill 'plain prose' 'and `code`'
     check
     [ "$status" -eq 0 ]
-    [ -z "$output" ]
+    [ "$output" = "check-skill-text: no wikilinks outside code, memory/ paths or source-fact filenames in 1 files" ]
 }
 
 @test "a missing directory exits 2" {

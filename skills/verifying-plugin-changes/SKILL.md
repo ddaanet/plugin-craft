@@ -90,9 +90,13 @@ file can be written with no hook registered to consume it — a silent no-op, no
 error. Until a reload, fall back to the previously-shipped path and say so; never
 report a mid-session plugin edit as "now active" without one.
 
-Exception: bundled *scripts* invoked by a bare-name `bin/` shim take effect
-immediately, since the file is read on each call. How such a script is reached
-is in `../skill-authoring/references/bundled-scripts.md`.
+Exception: bundled *scripts* invoked by a bare-name `bin/` shim are read on each
+call, but from the copy on PATH. PATH holds the `bin/` of each enabled plugin's
+installed root, fixed at session start: the cache copy for a marketplace
+install, the checkout under `--plugin-dir`. An edit takes effect on the next
+call only when made to that copy; an edit to a source checkout that is not that
+copy does not run. How such a script is reached is in
+`../skill-authoring/references/bundled-scripts.md`.
 
 ## Hook event registration is frozen; script bodies are not
 
