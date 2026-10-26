@@ -105,7 +105,9 @@ learned.
 Per event: `UserPromptSubmit` → `additionalContext`. `PreToolUse` →
 `additionalContext` **and** `permissionDecisionReason` on a deny (§2), plus
 `systemMessage` for the human; stderr + exit 2 also surfaces. `PostToolUse` → `additionalContext`; stderr + exit 2 feeds back to the
-model. `PostToolUseFailure` routes the same way, and a non-zero Bash exit fires
+model. `PostToolBatch` → `additionalContext` with exit 0; exit 2 ends the turn
+and any other non-zero is invisible to the agent
+(`references/output-channels.md` §1). `PostToolUseFailure` routes the same way, and a non-zero Bash exit fires
 it instead of `PostToolUse` (`references/input-and-harness.md`).
 
 Route user-facing notices through `systemMessage`, not stderr-on-exit-0 and **not** via the agent —
@@ -114,8 +116,10 @@ Route user-facing notices through `systemMessage`, not stderr-on-exit-0 and **no
 ## 4 · Routing
 
 - **`permissionDecision`, `updatedInput`, the auto-mode classifier,
-  `updatedToolOutput`, a guard that must fail closed, or emitting file bodies
-  the agent must edit** → `references/output-channels.md`.
+  `updatedToolOutput`, a guard that must fail closed, even in the commands
+  after its own deny, `PostToolBatch` exit codes, an `updatedInput` rewrite that prompts or
+  is denied under a prefix allow rule, or emitting file bodies the agent must
+  edit** → `references/output-channels.md`.
 - **What arrives on stdin, which harness (`--print`, the Agent SDK) fires
   which event, or two hooks on one event sharing a file or a step** →
   `references/input-and-harness.md`.

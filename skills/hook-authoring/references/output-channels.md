@@ -48,11 +48,61 @@ that must fail closed catches the parse failure and exits 2 itself. Empty stdin
 is the other gap: jq exits 0 and prints nothing, so no status check ever sees
 it, and the guard has to test the extracted field for emptiness.
 
+**The corollary after the decision: once a hook has decided a deny, every later
+command's failure must be absorbed.** The rule inverts at the decision point.
+Before it, discarding a command's status is the classic defect; after it,
+discarding the status fails closed and propagating it fails open. If `set -e`
+reaches any command after the deny is decided — a probe, a lookup, a listing
+that only picks between two refusal wordings — the hook exits with a status
+other than 2 and prints nothing on stdout. Claude Code reads that as a
+non-blocking error and the refused call goes ahead, the hook having printed
+nothing on either stream. Measured (by 2026-09-17; CC version not recorded): a
+`git` listing after the deny, with `CLAUDE_PROJECT_DIR` not a repository, exits
+128 with empty stdout and empty stderr. Other statuses reach the same state but
+were not measured: `grep` missing from `PATH` (127), an OOM-killed child (137), a
+failing filter (2).
+
+- A bare `|| true` on a command whose output feeds only the *wording* of an
+  already-decided refusal is correct. Narrowing it to the one error the author
+  had in mind brings the bypass back.
+- A status read in an `if` condition is safe; a branch body is errexit-live.
+  `status=$?` must be the first statement of an `else` branch — one `test`
+  command above it clobbers `$?` and, when false, kills the hook (exit 1, no
+  stdout).
+- A green suite proves nothing here. Add a test that stubs the post-decision
+  command to fail and asserts the hook still exits 0 with its decision JSON on
+  stdout; without it the bypass stays invisible.
+
 **`PostToolUse` — nothing can block.** The docs are explicit: *"PostToolUse hooks can't undo actions since the tool has already executed."* `exit 2` is mere feedback to the model, and the exit code buys nothing.
 
 So "exit 0 on every path so we never block a Write" is over-broad reasoning that
 lands on the right answer: `exit 0` is right for *visibility*, not for
 non-blocking.
+
+**`PostToolBatch` — exit codes do the opposite of what `PostToolUse` suggests
+(measured CC 2.1.296, a scratch hook under `claude -p`).**
+
+| Hook exit | Turn | Agent sees | Transcript |
+| --- | --- | --- | --- |
+| 0 + `additionalContext` | goes on | the context | `hook_additional_context` |
+| 1 or 3 | goes on | nothing | `hook_non_blocking_error`, stderr |
+| 2 | ends, empty reply | the stderr, on the next user turn | `hook_stopped_continuation` |
+
+Exit 2 ends the turn; any other non-zero is invisible to the agent, and inside a
+subagent to everyone, since a hook's output there stays in the subagent's own
+transcript. Not measured: how many stderr lines the interactive TUI renders.
+
+It bites because `awk`, `cmp` and `grep` exit 2 on a file they cannot open. A
+batch hook under `set -e` dies with 2 the moment a file it tested a line earlier
+has vanished, and the user sees a turn that simply stops.
+
+The remedy is one guard every batch hook calls. It captures the hook's stderr
+and, from an `EXIT` trap, turns a non-zero death into a single JSON object —
+`systemMessage` and `additionalContext` both naming the hook, the status, the
+failing command and the captured error — and exits 0. When it cannot report, it
+exits with the original status, 2 turned into 1 so the failure does not end the
+turn. This is for `PostToolBatch` only: a `PreToolUse` hook must fail closed,
+and an exit-0 report is the wrong default there.
 
 **Unresolved tension — re-verify before relying on it.** The 2026-06-10 finding
 says stderr reaches the user only on exit 2 / `--verbose`. The docs (fetched
@@ -103,6 +153,40 @@ will instead *require* the bypass. Two plugins shipped this:
 `true && git status --porcelain` running unchecked) and `cwd-safety` (its `cd`-restore
 rewrite, fixed 2026-08-28). One matching `excludedCommands` segment
 unsandboxes the whole call, statically, and does not auto-approve it.
+
+**A rewrite that prefixes the command stops matching the user's prefix allow
+rule.** `export X=…; cmd` and `X=… cmd` no longer match `Bash(cmd:*)`: the user
+is prompted interactively, and a headless `-p` run is denied. Dropping the
+decision is still right; the cost lands on rules, not on the classifier.
+Measured with `claude -p --permission-mode default --output-format json`,
+reading `.permission_denials` (CC 2.1.29x, 2026-10-15), `git commit` standing in
+for the command. The agent typed each command directly; that a hook's rewrite
+meets the same match rests on the bundle read above, not on this measurement.
+
+| allowedTools | command | result |
+| --- | --- | --- |
+| `Bash(git commit:*)` | `export X=/p; git commit …` | denied |
+| `Bash(git commit:*)` | `X=/p git commit …` | denied |
+| `Bash(git commit:*)` | `git commit …` | allowed |
+| `Bash(git commit:*)`, `Bash(export X=*)` | `export X=/p; git commit …` | allowed |
+
+Two ways out. For the `export` form, document the extra `Bash(export VAR=*)`
+rule for users; no rule for the `X=… cmd` form was measured. For either form,
+rewrite so the command still starts with the program's name — pass the value as
+an argument.
+
+Three pitfalls each produced a false pass when probing this:
+
+- The sandbox auto-allows sandboxed Bash; pass
+  `--settings '{"sandbox":{"enabled":false}}'`.
+- A scratch repo under `~/.claude` is a protected path, so every write is
+  refused whatever the rules and the refusal says nothing about them; use a
+  directory under `/tmp/claude/`.
+- A user-installed plugin's hook still loads under
+  `--settings '{"enabledPlugins":{"x@m":false}}'` and under
+  `--setting-sources project`, and keeps answering `allow` for the real
+  command. The transcript's `hook_success` attachments show which hook decided;
+  probe the same command shape with a program no installed hook matches.
 
 **The classifier scores safety, not convention** — it passes an unprompted
 `Edit` of a pre-existing file in a sibling repo even against a CLAUDE.md rule
