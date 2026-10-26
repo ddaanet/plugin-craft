@@ -158,6 +158,25 @@ assert_status() {
     }
 }
 
+# assert_shape: every stdout line is a tab-separated status line or the one
+# `next` line, which comes last; a stray line (a leaked command output) fails.
+assert_shape() {
+    local n=13
+    printf '%s\n' "$output" | awk -F'\t' -v n="$n" '
+        $1=="next" { nexts++; if (NF != 4) bad = bad "next line field count: " $0 "\n"; nextat = NR; next }
+        $1 ~ /^(ok|missing|blocked|warn|skip)$/ && NF >= 3 { st++; next }
+        { bad = bad "stray line: " $0 "\n" }
+        END {
+            if (st != n) bad = bad "status lines: " st ", wanted " n "\n"
+            if (nexts != 1) bad = bad "next lines: " nexts "\n"
+            if (nextat != NR) bad = bad "next line is not last\n"
+            if (bad != "") { printf "%s", bad; exit 1 }
+        }' || {
+        echo "$output"
+        return 1
+    }
+}
+
 # ---- cases -----------------------------------------------------------------
 
 @test "empty dir: next is repo, agent git init" {
@@ -394,6 +413,13 @@ assert_status() {
         echo "unexpected missing/blocked line"
         return 1
     fi
+}
+
+@test "complete repo: stdout holds only the 13 status lines and a last next line" {
+    mk_complete
+    probe
+    [ "$status" -eq 0 ]
+    assert_shape
 }
 
 @test "path with a space and a quote: complete gives next none" {
