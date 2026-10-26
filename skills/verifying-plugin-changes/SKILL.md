@@ -21,7 +21,8 @@ Even after a refresh, only a *new* session picks it up — agent definitions in
 particular are cached at session start.
 
 **Fix:** ship via a **version bump**, not just a push. To develop against current
-`main`, load with `--plugin-dir` instead of the cache.
+`main`, load with `--plugin-dir` or, with the toolkit vendored, through its dogfood
+launcher, instead of the cache.
 
 **Installs are pinned per scope, not globally.**
 `~/.claude/plugins/installed_plugins.json` holds one entry per (plugin, scope):
