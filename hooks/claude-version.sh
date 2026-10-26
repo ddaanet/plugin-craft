@@ -15,12 +15,15 @@ main() {
     command -v jq > /dev/null 2>&1 || return 0
 
     payload="$(cat)"
-    command="$(jq -r '.tool_input.command // empty' <<< "$payload" 2> /dev/null)" || return 0
-    [ -n "$command" ] || return 0
-    bash "$dir/is-claude-version-call.sh" "$command" || return 0
-
+    # Cheapest checks first: this runs on every Bash call, and the matcher is
+    # linear-per-character bash. A call that printed no Claude version, or
+    # whose command never mentions claude, never reaches it.
     stdout="$(jq -r '.tool_response.stdout // empty' <<< "$payload" 2> /dev/null)" || return 0
     installed="$(installed_version "$stdout")" || return 0
+
+    command="$(jq -r '.tool_input.command // empty' <<< "$payload" 2> /dev/null)" || return 0
+    case "$command" in *claude*) ;; *) return 0 ;; esac
+    bash "$dir/is-claude-version-call.sh" "$command" || return 0
 
     transcript="$(jq -r '.transcript_path // empty' <<< "$payload" 2> /dev/null)" || return 0
     [ -n "$transcript" ] || return 0
@@ -31,16 +34,12 @@ main() {
 }
 
 # First line of the tool's stdout shaped like `2.1.300 (Claude Code)`; the
-# command may print other lines around it.
+# command may print other lines around it. One regex over the whole string,
+# not a line loop, since stdout can be large.
 installed_version() {
-    local line re='^([0-9]+(\.[0-9]+)+[^[:space:]]*)[[:space:]]+\(Claude Code\)'
-    while IFS= read -r line || [ -n "$line" ]; do
-        if [[ "$line" =~ $re ]]; then
-            printf '%s\n' "${BASH_REMATCH[1]}"
-            return 0
-        fi
-    done <<< "$1"
-    return 1
+    local re=$'(^|\n)([0-9]+(\.[0-9]+)+[^[:space:]]*)[[:space:]]+\(Claude Code\)'
+    [[ "$1" =~ $re ]] || return 1
+    printf '%s\n' "${BASH_REMATCH[2]}"
 }
 
 emit() {

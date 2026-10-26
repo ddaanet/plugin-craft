@@ -98,7 +98,7 @@ A Claude Code plugin with no commands and no agents, and one hook: `hooks/hooks.
 
 **L-2 · The FR-7 check cannot see every dangling identifier.** It matches wikilinks, `memory/` paths and known fact filenames. Internal requirement or decision ids (`FR5a`, `(D14)`) and paths into another repository pass it and need a reader.
 
-**L-3 · The `claude --version` hook has residual bounds.** Wrappers (`env X=1 claude -v`, `command claude -v`) and a path-qualified `claude` are not matched, and a consumer without `jq` gets silence. Both are deliberate: a false annotation costs more than a missed one. Behaviour across a real mid-session update is untested.
+**L-3 · The `claude --version` hook has residual bounds.** Wrappers (`env X=1 claude -v`, `command claude -v`) a path-qualified `claude` and a command led by `time`, `{` or `if` are not matched, and a consumer without `jq` gets silence. Both are deliberate: a false annotation costs more than a missed one. Behaviour across a real mid-session update is untested.
 
 ## Non-goals
 

@@ -8,8 +8,10 @@
 # `echo "claude --version"` and `git commit -m "claude -v"` do not match.
 #
 # Residual bounds: wrappers (`env X=1 claude -v`, `command claude -v`) and a
-# path-qualified binary (`~/.local/bin/claude --version`) are not matched, and
-# expansions, heredocs and `$(...)` inside quotes are not interpreted.
+# path-qualified binary (`~/.local/bin/claude --version`) are not matched, nor
+# is a command led by a reserved word (`time claude -v`, `{ claude -v; }`,
+# `if claude -v`), and expansions, heredocs and `$(...)` inside quotes are not
+# interpreted.
 
 main() {
     local cmd="${1-}" ch quote="" word="" have_word=0 i

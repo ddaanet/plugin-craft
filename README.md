@@ -4,8 +4,8 @@ Building on the Claude Code harness: authoring and debugging hooks, writing
 skills, and verifying that the plugin code actually running is the code you
 just edited.
 
-Four skills (and one small hook, below), each firing on a moment you are already in rather than on a topic
-word you have to think to type. They were cut from a shared memory tier because
+Four skills (and one small hook, below), each firing on a moment you are
+already in rather than on a topic word you have to think to type. They were cut from a shared memory tier because
 recall delivers only the first 4KB of a fact and stops — most of each body was
 unreachable by the mechanism meant to reach it. A skill body is reachable in
 full at invocation, which is the whole reason this content is a plugin.
