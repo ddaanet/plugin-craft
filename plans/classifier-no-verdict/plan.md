@@ -20,7 +20,7 @@ the same change (brief; D-8 of the design).
 | - | ----- | ------ | ------ |
 | 1 | The error string is as quoted | **Verified, with a correction.** The bundle composes it from a template: `<tool-label> gave no verdict<reason> ... <tool>. This is a hard failure, not a transient one: ... retrying this action will get the same answer. Don't retry it.` The quoted text is the `server_call_skipped` reason. | `find` on the 2.1.310 binary for `gave no verdict`, `it skipped this action` |
 | 2 | "No verdict" is one condition | **Refuted.** Three families. Hard: `server_no_result`, `server_unrecognized_result`, `server_call_skipped`, `server_unsupported`, `server_unavailable_disabled`, `server_unavailable_error`, `..._refused`, `..._input_too_long`. Transient ("may try again once, as-is"): `server_stream_ended`, `server_thread_unsupported`, timeouts, `..._error`, `..._other`. One-retry: `server_not_requested`, `server_results_not_held`, `server_context_stale`, `..._truncated`, and `server_call_skipped` when the classifier "expected this call not to need a review". So "don't retry" holds only for the hard text, and the parenthetical names the reason. | same binary, the message builder around `Eie(...)` |
-| 3 | Cause: `--plugin-dir .` marks every file sensitive | **Unverifiable here, and unsupported by the bundle.** `server_call_skipped` is a *server* result ("skipped"); no client-side sensitivity check feeds it. The `--plugin-dir` link rests on one observation plus the brief's own counter-evidence (two Writes under `.claude/` in the same checkout succeeded). | bundle read; brief "Counter-evidence" |
+| 3 | Cause: `--plugin-dir .` marks every file sensitive | **Settled by my human partner (D5).** The Edit/Write path check `checkPathSafetyForAutoEdit` returns `ask` for every path under an inline plugin root, before acceptEdits and allow rules (read in the 2.1.283 bundle; still present in 2.1.310). That this is what the server reports as `server_call_skipped` is inferred, not traced. | memory `ddaanet/cc-plugin-dir-edits-sensitive`; `grep` on the 2.1.310 binary |
 | 4 | A hook can observe the result | **Verified in the bundle, delivery unverified live.** A deny with `decisionReason.type === "classifier"` and `classifier === "auto-mode"` runs `PermissionDenied` hooks. Payload: `tool_name`, `tool_input`, `tool_use_id`, `reason` (+ common fields, `agent_id` in a delegate). Matcher is `tool_name`. The call site passes `reason ?? "Permission denied"` and does **not** gate on the no-verdict flag. | `executePermissionDeniedHooks` (`_ko`) and its caller in the tool-result path |
 | 5 | `PostToolUseFailure` is the carrier | **Refuted as the likely path.** A permission deny is returned as a tool-result error built in the permission path; the failure hook is the execution-error path. Not probed live. | bundle: the deny branch calls `_ko`, not the failure executor |
 | 6 | A hook can answer "may retry" | **Irrelevant.** `retry: true` is honoured only when `noVerdict` is false; the retry note is skipped for no-verdict. | same caller: `Zs && !decisionReason.noVerdict` |
@@ -37,13 +37,13 @@ that needs the sandbox off. All "needs a live denial" items are in "Probes".
 
 ## What the evidence changes about the brief
 
-- The guidance cannot assert a cause. It can assert a *symptom* (hard-failure
-  text on a file write), a *scope* (the parenthetical names the reason;
+- The guidance states the cause (D5): `--plugin-dir` marks the loaded
+  directory's content sensitive. It also states the *symptom* (hard-failure
+  text on a file write), the *scope* (the parenthetical names the reason;
   transient and one-retry texts say to retry, so they are out of scope) and a
-  *route*, offered as observed once, not as the fix for `--plugin-dir`.
-- The brief's open question 1 (path-dependent or time-dependent) stays open;
-  the bundle reads as time/server-dependent (`server_call_skipped` is decided
-  server-side), which the brief's own counter-evidence also fits.
+  *route*.
+- The brief's counter-evidence (two Writes under `.claude/` succeeding) does
+  not reopen the cause; P3 still checks path dependence.
 - `retry` and `PostToolUseFailure` drop out; `PermissionDenied` is the only
   hook event that observes this.
 
@@ -103,10 +103,11 @@ none runs inside an agent session without my human partner's go-ahead.
 **T2 (O1) - Skill section.** Pre: decision D1 = skill. Post: description of
 `verifying-plugin-changes` names the string within its existing size budget;
 a section states scope (hard-failure family only; a refusal naming a reason is
-a denial, no route), that the cause is unproven, the Bash `python3` route as
+a denial, no route), the cause (`--plugin-dir` marks the loaded directory's
+content sensitive; loading from a synced copy avoids it), the Bash `python3` route as
 reviewed not bypass, and a one-sentence line telling a dispatcher to carry
-the route to a delegate that writes files. Invariant: no claim about
-`--plugin-dir` as cause; heredoc not named as a route unless P5 passes.
+the route to a delegate that writes files. Invariant: heredoc not named as a
+route unless P5 passes.
 Update FR-5 in `docs/design.md` and add a changelog line.
 
 **T3 (O3/O4) - Hook.** Pre: P1 passed, D1 = hook or both. Post:
@@ -132,11 +133,12 @@ pattern). This writes into the shared ddaanet tier; see D6.
    Default hard only; a transient failure should say retry, not reroute.
 4. **Name the heredoc?** Default: omit until P5, per the brief's ruling and
    that it was never tested.
-5. **State the cause?** Default: no. Say "seen under `--plugin-dir`", cause
-   unproven; the bundle points at a server-side skip.
+5. **State the cause?** Decided 2026-10-26: yes. `--plugin-dir` marks the
+   directory's content sensitive.
 6. **Retiring the memory fact.** It lives in the shared ddaanet submodule, so
    the edit is outside this repo's own tree. Default: do it as a separate step
    my human partner confirms, after the shipping release exists.
 7. **Description budget.** Adding the string to an already long
    `verifying-plugin-changes` description: accept, or trim another clause?
-   Default: accept with a clause trimmed to hold length.
+   Decided 2026-10-26: trim only if a clause is genuinely removable; the
+   budget itself is settled by asking `claude-code-guide`.
