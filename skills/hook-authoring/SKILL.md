@@ -1,6 +1,6 @@
 ---
 name: hook-authoring
-description: "What a Claude Code hook receives on stdin and what its stdout JSON can actually do — the control surface, the three output channels and their audiences, and how a `PreToolUse` decision meets the permission pipeline. Use when writing or debugging a hook script, choosing between `systemMessage`, `additionalContext` and stderr, or working out why a block, a rewrite or injected text did not land. Complements `plugin-dev:hook-development`, which covers configuration and the event basics; this covers the payload fields and channel behaviour it omits. Not a style guide for hook message wording."
+description: "What a Claude Code hook receives on stdin and what its stdout JSON can actually do — the control surface, the three output channels and their audiences, how a `PreToolUse` decision meets the permission pipeline, and how to contain a plugin's own agents. Use when writing or debugging a hook script, choosing between `systemMessage`, `additionalContext` and stderr, working out why a block, a rewrite or injected text did not land, or when a plugin agent's frontmatter `hooks:` never fire. Complements `plugin-dev:hook-development`, which covers configuration and the event basics; this covers the payload fields and channel behaviour it omits. Not a style guide for hook message wording."
 ---
 
 ## 1 · The control surface: no hook injects a tool call

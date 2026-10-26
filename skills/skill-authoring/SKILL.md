@@ -1,6 +1,6 @@
 ---
 name: skill-authoring
-description: "How to write a skill that is found, triggered and able to reach its own scripts: description shape and its per-session cost, what `allowed-tools` actually does, which second-person forms the imperative rule targets, and how a bundled script is invoked when the plugin env vars are absent. Use when writing or revising a skill, a plugin command or its frontmatter, or when a skill's description is not matching the moments it should. Complements `plugin-dev:skill-development`, which covers structure and progressive disclosure. For a skill whose edited body is not the one loading, see `plugin-craft:verifying-plugin-changes`."
+description: "How to write a skill that is found, triggered and able to reach its own scripts: description shape and its per-session cost, what `allowed-tools` actually does, which second-person forms the imperative rule targets, how a bundled script is invoked when the plugin env vars are absent, and why a conditional a script could decide stays out of agent-facing text. Use when writing or revising a skill, a plugin command or its frontmatter, when a skill body or a hook's `additionalContext` branches on something a script could check, or when a skill's description is not matching the moments it should. Complements `plugin-dev:skill-development`, which covers structure and progressive disclosure. For a skill whose edited body is not the one loading, see `plugin-craft:verifying-plugin-changes`."
 ---
 
 # Skill authoring
