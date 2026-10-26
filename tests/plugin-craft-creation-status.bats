@@ -176,12 +176,13 @@ assert_status() {
     assert_next repo decision
 }
 
-@test "linked worktree without gitlore: worktree blocked" {
+@test "linked worktree without gitlore: worktree blocked, next worktree" {
     mk_repo
     git -C "$ROOT" worktree add -q -b wt-branch "$BATS_TEST_TMPDIR/wt tree"
     probe "$BATS_TEST_TMPDIR/wt tree"
     [ "$status" -eq 1 ]
     assert_status blocked worktree
+    assert_next worktree decision
 }
 
 @test "fresh repo: next is gitlore" {
@@ -198,6 +199,9 @@ assert_status() {
     probe
     [ "$status" -eq 1 ]
     assert_next gitlore agent commit
+    # The action names the staged paths, not only the verb.
+    [[ "$(next_field 4)" == *".gitmodules"* ]]
+    [[ "$(next_field 4)" == *".envrc"* ]]
 }
 
 @test "gitlore committed, no manifest: next is manifest" {
@@ -288,12 +292,12 @@ assert_status() {
     commit_all
     probe
     [ "$status" -eq 1 ]
-    assert_next envrc agent
+    assert_next envrc agent "direnv allow"
 }
 
 @test "a PATH_add between .gitlore/bin and plugin-dev/bin: envrc ok" {
     mk_complete
-    printf 'source_up_if_exists\nPATH_add .gitlore/bin\n# PATH_add plugin-dev/bin\nPATH_add scripts\nPATH_add plugin-dev/bin\n' \
+    printf 'source_up_if_exists\nPATH_add .gitlore/bin\nPATH_add scripts\nPATH_add plugin-dev/bin\n# PATH_add scripts\n' \
         > "$ROOT/.envrc"
     commit_all
     probe
@@ -336,12 +340,32 @@ assert_status() {
     commit_all
     probe
     [ "$status" -eq 1 ]
-    assert_next memory-url agent "o/mem"
+    assert_next memory-url agent "https://github.com/o/mem"
 }
 
 @test "placeholder memory url: next is memory-url, decision" {
     mk_complete
     sed -i.bak 's|url = .*|url = ./.git/gitlore-placeholder|' "$ROOT/.gitmodules"
+    rm "$ROOT/.gitmodules.bak"
+    commit_all
+    probe
+    [ "$status" -eq 1 ]
+    assert_next memory-url decision
+}
+
+@test "memory url neither https, ssh nor placeholder: next is memory-url, decision" {
+    mk_complete
+    sed -i.bak 's|url = .*|url = http://example.com/o/mem.git|' "$ROOT/.gitmodules"
+    rm "$ROOT/.gitmodules.bak"
+    commit_all
+    probe
+    [ "$status" -eq 1 ]
+    assert_next memory-url decision
+}
+
+@test "local-path memory url: next is memory-url, decision" {
+    mk_complete
+    sed -i.bak 's|url = .*|url = ../mem|' "$ROOT/.gitmodules"
     rm "$ROOT/.gitmodules.bak"
     commit_all
     probe
@@ -404,6 +428,31 @@ assert_status() {
     assert_next none -
 }
 
+@test "python shebang in a shipped extensionless file: python warn" {
+    mk_complete
+    mkdir -p "$ROOT/bin"
+    printf '#!/usr/bin/env python3\nprint(1)\n' > "$ROOT/bin/tool"
+    chmod +x "$ROOT/bin/tool"
+    printf '.claude-plugin\nskills\nbin\nREADME.md\n' > "$ROOT/dist.include"
+    commit_all
+    probe
+    [ "$status" -eq 0 ]
+    assert_status warn python
+    [[ "$output" == *"bin/tool"* ]]
+}
+
+@test "no dist.include: python in scripts/ still warns" {
+    mk_complete
+    rm "$ROOT/dist.include"
+    mkdir -p "$ROOT/scripts"
+    printf 'print(1)\n' > "$ROOT/scripts/tool.py"
+    commit_all
+    probe
+    [ "$status" -eq 1 ]
+    assert_status warn python
+    [[ "$output" == *"scripts/tool.py"* ]]
+}
+
 @test "python outside the shipped paths: python ok" {
     mk_complete
     mkdir -p "$ROOT/docs"
@@ -419,12 +468,16 @@ assert_status() {
     add_gitlore
     add_manifest
     git -C "$ROOT" add .gitmodules memory # leaves staged and untracked state
+    # A tracked file whose stat no longer matches the index: plain `git status`
+    # rewrites the index to refresh it, which the Post clause forbids.
+    touch -t 202001010000 "$ROOT/README.md"
     snapshot() {
-        git -C "$ROOT" status --porcelain
+        # Index first, and nothing below may refresh it.
+        cksum < "$ROOT/.git/index"
+        git --no-optional-locks -C "$ROOT" status --porcelain
         (cd "$ROOT" && find . -path ./.git -prune -o -print | LC_ALL=C sort)
         (cd "$ROOT" && find . -path ./.git -prune -o -type f -exec cksum {} + | LC_ALL=C sort)
-        cksum < "$ROOT/.git/index"
-        git -C "$ROOT" ls-files -s
+        git --no-optional-locks -C "$ROOT" ls-files -s
     }
     before="$(snapshot)"
     probe
