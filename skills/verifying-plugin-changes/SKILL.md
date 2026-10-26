@@ -60,7 +60,8 @@ means a stale nested cache.
 
 A related symptom with no stale code behind it: a hook in a plugin agent's
 `agents/*.md` frontmatter never fires and nothing errors — Claude Code drops it
-at load and says so only in the `--debug` log. `plugin-craft:hook-authoring`
+at load and says so only in the `--debug` log (observed on CC 2.1.296 and
+2.1.310). `plugin-craft:hook-authoring`
 owns that fact and the containment that works instead.
 
 ## Skill bodies are snapshotted at session start

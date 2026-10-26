@@ -10,7 +10,7 @@
 
 **FR-1 · One plugin, four skills, each firing on a moment.** Every description names a moment a session is already in rather than a topic word. *Done (prose)* — the `description:` of each `skills/*/SKILL.md`.
 
-**FR-2 · `hook-authoring` carries the whole hook surface.** The stdin payload, the stdout control surface, the channel mechanics, the `PreToolUse` permission pipeline and the scripted-harness comparison. *Done (prose)* — `skills/hook-authoring/`.
+**FR-2 · `hook-authoring` carries the whole hook surface.** The stdin payload, the stdout control surface, the channel mechanics, the `PreToolUse` permission pipeline, the scripted-harness comparison and containing a plugin's own agents, whose frontmatter hooks are dropped. *Done (prose)* — `skills/hook-authoring/`.
 
 **FR-3 · A deny is taught as splitting three ways by audience.** Verdict on `permissionDecisionReason`, recovery on `additionalContext`, one line on `systemMessage`. *Done (prose)* — `skills/hook-authoring/SKILL.md` §2.
 

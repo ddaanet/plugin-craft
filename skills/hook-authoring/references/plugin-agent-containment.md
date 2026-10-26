@@ -18,9 +18,10 @@ Plugin agent file <path>/agents/<name>.md sets hooks, which is ignored for plugi
 Nothing else signals it. The agent is found and dispatched as
 `<plugin>:<agent>`, the subagent's `.meta.json` shows
 `agentType: "<plugin>:<agent>"` with no `customAgentType`, and every check that
-catches the two silent gates of a `.claude/agents/` definition passes. The
+catches the two silent gates of a `.claude/agents/` definition (§2) passes. The
 plugin source being exempt from the workspace-trust check is a separate matter:
-the exemption never gets a chance to apply.
+the exemption never gets a chance to apply, because the hooks are dropped
+before any trust check would run.
 
 Verified on **CC 2.1.296** (2026-10-13, plugin loaded through
 `CLAUDE_CODE_PLUGIN_DIRS`, run twice) and re-probed on **CC 2.1.310**
@@ -35,25 +36,45 @@ plugin-agent frontmatter are dropped the same way.
 
 - **A plugin-level `hooks/hooks.json`** whose script reads the payload's
   `agent_type` and acts only for the plugin's own agents. Inside a plugin
-  agent the value is `"<plugin>:<agent>"` (CC 2.1.296 and 2.1.310). The main
-  thread's payloads carry no `agent_type` (2.1.310: the main thread's `Agent`
+  agent the value is `"<plugin>:<agent>"`, and the main thread's payloads
+  carry no `agent_type`. Re-probed on **CC 2.1.310**: the main thread's `Agent`
   dispatch logged none; the subagent's `Bash` call and its final handback call
-  logged `probe-plugin:probe-agent`). `PreToolUse` and `SubagentStart` carry it
-  plus an `agent_id`. A dispatch `name` leaves the value alone (the
-  `.meta.json` keeps `agentType` and gains a separate `name` key), so this
-  route does not inherit the named-dispatch gate of the other. An exit 2 gated
-  on the value denies the call inside the agent (tool result `PreToolUse:Bash
-  hook error: … This hook comes from the <plugin> plugin.`) while the same
-  command on the main thread runs. The hook process gets `CLAUDE_PLUGIN_ROOT`
-  and `CLAUDE_PROJECT_DIR`.
+  logged `probe-plugin:probe-agent`. Carried from **CC 2.1.296** only, not
+  re-probed:
+  - `PreToolUse` and `SubagentStart` both carry `agent_type` plus an
+    `agent_id`; the main thread carries neither (2.1.296).
+  - A dispatch `name` leaves the value alone (the `.meta.json` keeps
+    `agentType` and gains a separate `name` key), so this route does not
+    inherit the named-dispatch gate of the other (2.1.296).
+  - An exit 2 gated on the value denies the call inside the agent (tool result
+    `PreToolUse:Bash hook error: … This hook comes from the <plugin> plugin.`)
+    while the same command on the main thread runs (2.1.296).
+  - The hook process gets `CLAUDE_PLUGIN_ROOT` and `CLAUDE_PROJECT_DIR`
+    (2.1.296).
+
   **Cost:** the hook runs on every matching tool call of every session that
   enables the plugin, one process each, so it is a tax on sessions that never
   dispatch the agent (§3).
 - **Definitions installed into the consumer's `.claude/agents/`**, where
   frontmatter hooks attach. **Cost:** the plugin cannot deliver them on its
-  own; something must copy them into each consumer project, and both silent
-  gates of that location apply: the exact-path workspace-trust key and the rule
-  that a dispatch `name` disables the hooks.
+  own; something must copy them into each consumer project, and two
+  independent gates, each silent, can still drop the hooks there. Both must be
+  clear before they attach:
+  - **The exact-path trust key.** The frontmatter-hook trust check looks up the
+    project root (the definition's folder minus `/.claude/agents`) as an exact
+    key, `projects["<path>"].hasTrustDialogAccepted` in `~/.claude.json`, with
+    no walk up the tree. The session-level check does walk up, so a repo
+    trusted through an ancestor never shows a dialog yet fails this check.
+    Sources `plugin`, `policySettings`, `built-in`, `bundled`, `userSettings`
+    and `flagSettings` are exempt; a project's `.claude/agents/` is not. The
+    debug log says `Skipping frontmatter hooks for agent '…'`; the UI says
+    nothing.
+  - **No dispatch `name`.** A custom `name` on the Agent tool overwrites
+    `agentType` with the name and demotes the definition to
+    `customAgentType`; hooks register by resolving `agentType`, so none
+    register. Dispatch by `subagent_type` alone, and read `agentType` in the
+    subagent's `.meta.json`, since the agent cannot observe a hook that never
+    attached and reports itself contained.
 
 Either way, only a tripwire (§5) proves containment.
 
@@ -65,8 +86,8 @@ is calling.
 | Failure | Identified agent | Any other caller |
 | --- | --- | --- |
 | Payload does not parse; `agent_type` absent, not a string or not the hook's agent | n/a: not identified | exit 0, silent |
-| Interpreter missing, killed (OOM), or exits other than 0 or 2; module missing or unreadable (test readability first: python3 exits 2 on a script it cannot open, which reads as a block) | exit 2, reason on stderr | exit 0, silent |
-| Interpreter killed by a signal | exit 2 | exit 1 and one stderr line: a visible hook error that blocks nothing |
+| Interpreter missing or exits other than 0 or 2 (not a signal death, row below); module missing or unreadable (test readability first: python3 exits 2 on a script it cannot open, which reads as a block) | exit 2, reason on stderr | exit 0, silent |
+| Interpreter killed by a signal (status above 128; an OOM kill is 137) | exit 2 | exit 1 and one stderr line: a visible hook error that blocks nothing |
 | `tool_input` missing or mistyped, no project directory, any exception in the module | exit 2, reason on stderr | not reached |
 | Interpreter exits 0 or 2 | its own answer | its own answer |
 
@@ -110,15 +131,30 @@ Bash, Read, Write and Edit `tool_input` objects have fixed string-valued keys,
 so no nested key arises. The argument depends on Claude Code serializing the
 payload with `JSON.stringify` (non-ASCII left unescaped, `"` always escaped).
 
-**Reading the payload.** `payload=$(</dev/stdin)` is a bash builtin read: fast,
-drops only trailing newlines (insignificant after JSON). `read -r -d ''` reads a
-pipe one byte per syscall: 3.3 s for 2 MB, paid on every matching call. But
-measured 2026-10-26 on Linux (CC 2.1.310) the hook's stdin is a socket, and
-`$(</dev/stdin)` fails there: `/dev/stdin: No such device or address`, status
-1, empty payload. `$(cat)` and `read -r -d ''` read it. macOS is not measured.
-A failed read leaves the payload empty, which reads as an unidentified caller:
-every call passes, the agent's included. Check the read's status, and run the
-wrapper's test with a socket on stdin rather than a pipe or a here-string.
+**Reading the payload fails silently on some forms.** Measured 2026-10-26,
+Linux, bash 5.2, CC 2.1.310, under `claude -p`: the hook's stdin is a socket,
+and `payload=$(</dev/stdin)` fails on it with `/dev/stdin: No such device or
+address`, status 1, empty payload. macOS and interactive mode are not measured.
+An empty payload reads as an unidentified caller, so every call passes, the
+agent's included. Forms measured on a 2 MB payload (socket / pipe):
+
+| Form | Socket | Pipe |
+| --- | --- | --- |
+| `$(</dev/stdin)`, `$(</proc/self/fd/0)` | status 1, empty | full, 0.04 s |
+| `$(<&0)` | status 0, empty | status 0, empty |
+| `$(cat)` (external command) | full, 0.05 s | full |
+| `IFS= read -r -d '' p` (builtin) | full, 2.3 s, status 1 | full, 3.7 s, status 1 |
+| `IFS= read -r -N <large> p` (builtin; bash 4.1 or later, so not macOS's `/bin/bash` 3.2) | full, 0.09 s, status 1 | not run |
+
+A status check cannot tell failure from success: `read` returns 1 at EOF on
+every successful read, and `$(<&0)` fails with status 0. The signal is an empty
+payload, since a real hook payload is never empty. Make that case the visible
+kind of failure, exit 1 and one stderr line, and never a block: a block on a
+wrapper-level fault is the session brick of §3, and silence is the bug
+itself. With builtins only, `read -N` is the one fast form and needs bash 4.1;
+`read -d ''` works on every bash at a per-call cost that grows with the
+payload; `$(cat)` is fast where `cat` can be assumed on PATH. Command
+substitution drops trailing newlines, which are insignificant after JSON.
 
 ## 5 · Make the open state visible
 
@@ -130,7 +166,13 @@ identified call that must be blocked (exit 2). A payload naming no agent
 returns before any check runs, so it passes a broken interpreter; allow probes
 alone leave a hook that allows everything unseen, and the must-block probe
 catches it. Use fixed probe payloads and a fixed project directory that need
-not exist, so the result does not depend on the session. On a wrong status,
+not exist, so the result does not depend on the session. Feed the wrapper its
+payload on the same kind of stdin Claude Code supplies (a socket on Linux, §4),
+not a pipe or a here-string and not the module run directly: a check that
+bypasses the wrapper's read passes while the live hook fails open on an empty
+payload. Where the check cannot do that, the residual is covered only by the
+opening tripwire below, which catches the failure once an agent dispatches. On
+a wrong status,
 report on **both** channels: `systemMessage` for the user and
 `additionalContext` for the agent, telling it not to dispatch the contained
 agents. Fire it on startup, resume, clear and compact alike — after `/clear` or
