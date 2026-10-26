@@ -8,24 +8,39 @@ description: "What goes wrong when releasing a plugin with the vendored `claude-
 Installing, updating, the two-tag scheme, the install block, the release
 conventions, and the mandatory `prerelease` recipe are documented in
 `plugin-dev/README.md`, which ships with the vendored toolkit in every
-consumer. This skill covers only what goes wrong — the part that
-README does not carry.
+consumer. A release that publishes the `dist` branch has its happy path in
+`plugin-dev/manual/dist-branch.md`. This skill covers only what goes wrong —
+the part those files do not carry.
 
 ## `just release` must run unsandboxed
 
 The marketplace bump is the recipe's last step and its only write outside the
-repo, so under the sandbox it dies there on `mv: inter-device move failed …
-unable to remove target: Read-only file system` against the marketplace path.
-Everything before it — version commit, tag, branch push, GitHub release — has
-already landed, so a sandboxed run leaves a half-done release rather than a
-failed one; `just resume-release`, likewise unsandboxed, completes it and is
-idempotent.
+repo. Current toolkits probe the marketplace directory in preflight, so a
+sandboxed `just release` refuses up front with nothing public done. Toolkits
+before the preflight probe, and `just resume-release` today, meet the write
+only at the bump and die there on `mv: inter-device move failed … unable to
+remove target: Read-only file system` against the marketplace path. Everything
+before it — version commit, tag, branch push, GitHub release — has already
+landed, so that run leaves a half-done release rather than a failed one;
+`just resume-release`, unsandboxed, completes it and is idempotent.
 
-The durable fix is a `just release:*` entry in `sandbox.excludedCommands`,
-which sets the unsandboxing flag on the call unconditionally. It does **not**
-auto-approve: an excluded command still goes through full permission
-validation. What it buys is that the exclusion is static, so nothing depends
-on an agent choosing to pass an override flag.
+The durable fix is a `just release *` and a `just resume-release *` entry in
+`sandbox.excludedCommands`, which sets the unsandboxing flag on the call
+unconditionally. It does **not** auto-approve: an excluded command still goes
+through full permission validation. What it buys is that the exclusion is
+static, so nothing depends on an agent choosing to pass an override flag.
+
+Issue both recipes bare: alone in the Bash call, with no `cd … &&` prefix and
+no trailing `; echo`. A compound call is not covered by the entry and stays
+sandboxed. Never pass `dangerouslyDisableSandbox` on them: the auto-mode
+classifier denied `cd <plugin root> && just release; echo …` carrying that flag
+as a safety-bypass flag although the user had named the release, with nothing
+started (Claude Code 2.1.296, one run, 2026-10-15). The same recipe bare ran to
+completion, marketplace push included.
+
+To check whether a call will run excluded, add the Bash tool's
+`allowed_domains` parameter: the harness rejects it on a command that would not
+run sandboxed, and a rejection runs nothing.
 
 The classifier also weighs whether the release is what the user asked for.
 Reached for on the agent's own initiative — mid-way through executing a task
@@ -88,7 +103,8 @@ check stands regardless of the migration notes, which nothing enforces.
 ## Read the changelog from the source checkout
 
 Read the toolkit's `docs/changelog.md` from a local clone of the source
-repo, never from `plugin-dev/` — the `dist-` tree ships no `docs/`. Crossing
+repo, never from `plugin-dev/` — the `dist-` tree ships a `manual/` but no
+changelog. Crossing
 more than a patch version rewards checking it: its pointer lines say outright
 when a release is breaking. `git -C <source-checkout> show
 <tag>:docs/changelog.md` reads a specific version without checking it out.
