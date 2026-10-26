@@ -140,5 +140,8 @@ pattern). This writes into the shared ddaanet tier; see D6.
    my human partner confirms, after the shipping release exists.
 7. **Description budget.** Adding the string to an already long
    `verifying-plugin-changes` description: accept, or trim another clause?
-   Decided 2026-10-26: trim only if a clause is genuinely removable; the
-   budget itself is settled by asking `claude-code-guide`.
+   Decided 2026-10-26: trim only if a clause is genuinely removable. The one
+   documented cap is 1,536 characters for `description` plus `when_to_use`,
+   truncated in the listing (code.claude.com/docs/en/skills.md); no
+   listing-wide budget is documented. The description is 493 characters with
+   no `when_to_use`, so adding the ~90-character string fits without a trim.
