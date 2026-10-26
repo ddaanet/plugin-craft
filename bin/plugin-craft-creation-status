@@ -1,0 +1,391 @@
+#!/usr/bin/env bash
+# plugin-craft-creation-status [<dir>]
+#
+# Where a repository stands on the route to a ddaanet-shaped plugin: one
+# tab-separated line per check in route order, then the `next` line naming the
+# first check that is `missing` or `blocked`:
+#   <status>\t<check-id>\t<detail>
+#   next\t<check-id>\t<actor>\t<action>
+# Status: ok | missing | blocked | warn | skip. Actor: agent | shell | decision.
+# Exit 0 when nothing is missing or blocked, 1 otherwise, 2 on a usage error
+# (stderr only). Reads only: git runs with --no-optional-locks, nothing writes
+# or touches the network. Residual bound: a tab or newline inside a path is
+# flattened to a blank, so a shell action for such a path would not paste.
+
+set -u
+export LC_ALL=C
+unset CDPATH
+
+NEXT_ID="" NEXT_ACTOR="" NEXT_ACTION="" FAILED=0
+ROOT="" QROOT="" HAS_HEAD=0
+GL_STATUS="" GL_DETAIL="" GL_SUB="" GL_ACTION=""
+ENVRC_ARGS=()
+
+main() {
+    local dir=. tool id v
+    if [ "${1:-}" = -- ]; then
+        shift
+    elif [[ ${1:-} == -* ]]; then
+        fail "unknown option: $1"
+    fi
+    [ $# -le 1 ] || fail "expected at most one directory"
+    [ $# -eq 0 ] || dir=$1
+    for tool in git jq; do
+        command -v "$tool" >/dev/null || fail "$tool is not on PATH"
+    done
+    [ -d "$dir" ] || fail "not a directory: $dir"
+    ROOT=$(absolute "$dir")
+    QROOT=$(shq "$ROOT")
+    # A hook's repo-local git variables must not redirect the inspection.
+    while IFS= read -r v; do unset "$v"; done < <(git rev-parse --local-env-vars)
+
+    if check_repo; then
+        g rev-parse -q --verify HEAD >/dev/null && HAS_HEAD=1
+        gitlore_probe
+        check_worktree
+        emit "$GL_STATUS" gitlore "$GL_DETAIL" agent "$GL_ACTION"
+        check_manifest
+        check_toolkit
+        check_recipes
+        check_envrc
+        check_ignore
+        check_dist_include
+        check_dogfood
+        check_memory_url
+        check_origin
+        check_python
+    else
+        for id in worktree gitlore manifest toolkit recipes envrc ignore \
+            dist-include dogfood memory-url origin python; do
+            emit skip "$id" "no usable repository at the plugin root"
+        done
+    fi
+
+    if [ -z "$NEXT_ID" ]; then
+        printf 'next\tnone\t-\t%s\n' \
+            'route complete; first release: see plugin-dev/README.md, Conventions'
+    else
+        printf 'next\t%s\t%s\t%s\n' "$NEXT_ID" "$NEXT_ACTOR" "$NEXT_ACTION"
+    fi
+    exit "$FAILED"
+}
+
+fail() {
+    printf 'plugin-craft-creation-status: %s\nusage: plugin-craft-creation-status [<dir>]\n' "$1" >&2
+    exit 2
+}
+
+absolute() { # logical absolute path of $1, as given (no symlink resolution)
+    case $1 in
+        .) printf '%s' "$PWD" ;;
+        /*) printf '%s' "${1%/}" ;;
+        *) printf '%s/%s' "$PWD" "${1%/}" ;;
+    esac
+}
+
+shq() { # shell-quote $1 so a pasted command survives blanks and quotes
+    local q="'" r="'\\''"
+    printf "'%s'" "${1//$q/$r}"
+}
+
+g() { git --no-optional-locks --literal-pathspecs -C "$ROOT" "$@"; }
+
+in_head() { [ "$HAS_HEAD" -eq 1 ] && [ -n "$(g ls-tree HEAD -- "$1")" ]; }
+
+head_gitlink() { in_head "$1" && [[ $(g ls-tree HEAD -- "$1") == 160000* ]]; }
+
+emit() { # status id detail [actor action]
+    printf '%s\t%s\t%s\n' "$1" "$2" "${3//[$'\t\n']/ }"
+    [[ $1 == missing || $1 == blocked ]] || return 0
+    FAILED=1
+    [ -n "$NEXT_ID" ] || { NEXT_ID=$2 NEXT_ACTOR=${4:-} NEXT_ACTION=${5:-}; NEXT_ACTION=${NEXT_ACTION//[$'\t\n']/ }; }
+}
+
+check_repo() { # returns 1 when the later checks are meaningless
+    local out phys
+    phys=$(cd -- "$ROOT" && pwd -P) || phys=$ROOT
+    if out=$(git --no-optional-locks -C "$ROOT" rev-parse --show-toplevel 2>&1); then
+        if [ "$out" = "$phys" ]; then
+            emit ok repo "repository root"
+            return 0
+        fi
+        emit blocked repo "inside the repository rooted at $out" decision \
+            "the plugin root must be the repo root; extract it first"
+    elif [[ $out == *"not a git repository"* ]]; then
+        emit missing repo "not a git repository" agent "cd $QROOT && git init"
+    else
+        emit blocked repo "git refused: $out" decision "resolve the git error for the plugin root"
+    fi
+    return 1
+}
+
+check_worktree() {
+    local dirs
+    dirs=$(g rev-parse --path-format=absolute --git-dir --git-common-dir)
+    if [ "${dirs%%$'\n'*}" = "${dirs#*$'\n'}" ]; then
+        emit ok worktree "main work tree"
+    elif [ "$GL_STATUS" = ok ]; then
+        emit ok worktree "linked worktree, gitlore already mounted"
+    else
+        emit blocked worktree "linked worktree and gitlore is not mounted" decision \
+            "gitlore's installer refuses a linked worktree; run the route in the main checkout"
+    fi
+}
+
+gitlore_probe() { # sets GL_STATUS GL_DETAIL GL_ACTION GL_SUB for two callers
+    local IFS=, absent=() unc=() out
+    GL_STATUS=ok GL_DETAIL="mounted and committed" GL_ACTION="" GL_SUB=""
+    if [ -f "$ROOT/.gitmodules" ]; then
+        GL_SUB=$(g config --file "$ROOT/.gitmodules" --get submodule.gitlore-memory.path) \
+            || GL_SUB=""
+    fi
+    if [ -z "$GL_SUB" ]; then
+        absent+=(".gitmodules entry for gitlore-memory")
+    else
+        out=$(g ls-files -s -- "$GL_SUB")
+        [ "${out%% *}" = 160000 ] || absent+=("gitlink at $GL_SUB")
+    fi
+    [ -f "$ROOT/.gitlore/bin/claude" ] || absent+=(".gitlore/bin/claude")
+    envrc_load_file
+    envrc_has .gitlore/bin || absent+=(".envrc PATH_add .gitlore/bin")
+    if [ "${#absent[@]}" -gt 0 ]; then
+        GL_STATUS=missing GL_DETAIL="absent: ${absent[*]}"
+        GL_ACTION="run /gitlore:install (it confirms the memory remote with my human partner)"
+        return
+    fi
+
+    # Committed means HEAD holds the fact, not that the file is unmodified:
+    # later steps edit .envrc and .gitmodules on purpose.
+    if ! in_head .gitmodules \
+        || ! g config --blob HEAD:.gitmodules --get submodule.gitlore-memory.path >/dev/null; then
+        unc+=(.gitmodules)
+    fi
+    head_gitlink "$GL_SUB" || unc+=("$GL_SUB")
+    in_head .gitlore/bin/claude || unc+=(.gitlore/bin/claude)
+    ENVRC_ARGS=()
+    ! in_head .envrc || envrc_parse < <(g show HEAD:.envrc)
+    envrc_has .gitlore/bin || unc+=(.envrc)
+    if [ "${#unc[@]}" -gt 0 ]; then
+        GL_STATUS=missing GL_DETAIL="present but not committed: ${unc[*]}"
+        GL_ACTION="commit through gitlore's memory gate: ${unc[*]}"
+    fi
+}
+
+check_manifest() {
+    local m=.claude-plugin/plugin.json
+    if [ ! -f "$ROOT/$m" ]; then
+        emit missing manifest "$m is absent" agent "run /plugin-dev:create-plugin, then commit $m"
+    elif ! manifest_valid < "$ROOT/$m"; then
+        emit missing manifest "$m is not JSON with a name and a version" agent \
+            "repair $m (name and version), then commit it"
+    elif ! in_head "$m" || ! g show "HEAD:$m" | manifest_valid; then
+        emit missing manifest "$m is not committed with a name and a version" agent "commit $m"
+    else
+        emit ok manifest "$m committed with a name and a version"
+    fi
+}
+
+manifest_valid() { # stdin: a manifest
+    jq -e '(.name | type == "string" and length > 0)
+           and (.version | type == "string" and length > 0)' >/dev/null 2>&1
+}
+
+check_toolkit() {
+    local IFS=, problems=() s="$ROOT/.claude/settings.json"
+    if [ ! -f "$ROOT/plugin-dev/VERSION" ]; then
+        emit missing toolkit "plugin-dev/ is not vendored" shell "$(toolkit_install_block)"
+        return
+    fi
+    grep -qsF "import 'plugin-dev/release.just'" "$ROOT/justfile" \
+        || problems+=("justfile lacks the plugin-dev import")
+    if [ ! -s "$s" ] || [ ! -f "$s" ]; then
+        problems+=(".claude/settings.json is absent or a sandbox mask")
+    elif ! settings_wired "$s"; then
+        problems+=(".claude/settings.json lacks the version-guard and dogfood hooks")
+    fi
+    if [ "${#problems[@]}" -gt 0 ]; then
+        emit missing toolkit "vendored but unwired: ${problems[*]}" shell \
+            "cd $QROOT && bash plugin-dev/install.sh"
+    else
+        emit ok toolkit "vendored and wired"
+    fi
+}
+
+toolkit_install_block() { # the plugin-dev/README.md block as one pasteable line
+    # shellcheck disable=SC2016 # the command text is printed, not expanded here
+    printf 'cd %s && repo=ddaanet/claude-plugin-dev && %s && %s' "$QROOT" \
+        'tag=$(git ls-remote --tags --refs --sort=-v:refname "https://github.com/$repo.git" '"'dist-v*'"' | head -1 | sed '"'s|.*/||'"')' \
+        'curl -fsSL "https://raw.githubusercontent.com/$repo/$tag/install.sh" | bash -s -- "$tag"'
+}
+
+settings_wired() { # $1: settings file; the three commands, spelled as install.sh spells them
+    # shellcheck disable=SC2016 # ${CLAUDE_PROJECT_DIR} stays literal on purpose
+    jq -e --arg a 'bash "${CLAUDE_PROJECT_DIR}/plugin-dev/version-guard.sh"' \
+        --arg b 'bash "${CLAUDE_PROJECT_DIR}/plugin-dev/dogfood.sh" pre-tool' \
+        --arg c 'bash "${CLAUDE_PROJECT_DIR}/plugin-dev/dogfood.sh" session-start' \
+        '[.hooks[]?[]? | .hooks[]? | .command // empty] as $cmds
+         | all([$a, $b, $c][]; . as $w | any($cmds[]; . == $w))' "$1" >/dev/null 2>&1
+}
+
+check_recipes() {
+    local out w missing=()
+    if ! command -v just >/dev/null; then
+        emit warn recipes "just is not on PATH; recipes not checked"
+        return
+    elif ! out=$(just_in_root --summary 2>&1); then
+        emit missing recipes "the justfile does not compile: ${out%%$'\n'*}" agent \
+            "fix the justfile until \`just --list\` compiles"
+        return
+    fi
+    for w in precommit prerelease; do
+        [[ " $out " == *" $w "* ]] || missing+=("$w")
+    done
+    if [ "${#missing[@]}" -gt 0 ]; then
+        emit missing recipes "recipes not defined: ${missing[*]}" agent \
+            "define ${missing[*]} in the justfile"
+    elif ! just_in_root --dump --dump-format json 2>/dev/null \
+        | jq -e '.recipes.precommit.dependencies | map(.recipe) | index("check-refs") != null' \
+            >/dev/null 2>&1; then
+        emit missing recipes "precommit does not depend on check-refs" agent \
+            "make precommit depend on check-refs (\`precommit: check-refs\`)"
+    else
+        emit ok recipes "precommit (with check-refs) and prerelease defined"
+    fi
+}
+
+just_in_root() { just --justfile "$ROOT/justfile" --working-directory "$ROOT" "$@"; }
+
+check_envrc() {
+    probe_if envrc "PATH_add plugin-dev/bin comes after PATH_add .gitlore/bin" \
+        "PATH_add plugin-dev/bin is not the last PATH_add after .gitlore/bin" agent \
+        "edit .envrc so the last PATH_add is 'PATH_add plugin-dev/bin', after 'PATH_add .gitlore/bin'; then relay the shell act: cd $QROOT && direnv allow" \
+        envrc_ordered
+}
+
+# shellcheck disable=SC2317 # invoked by name through probe_if
+envrc_ordered() { # the last PATH_add is plugin-dev/bin and an earlier one is .gitlore/bin
+    local n
+    envrc_load_file
+    n=${#ENVRC_ARGS[@]}
+    [ "$n" -gt 1 ] && [ "${ENVRC_ARGS[n - 1]}" = plugin-dev/bin ] || return 1
+    unset 'ENVRC_ARGS[n - 1]'
+    envrc_has .gitlore/bin
+}
+
+envrc_load_file() {
+    ENVRC_ARGS=()
+    ! [ -f "$ROOT/.envrc" ] || envrc_parse < "$ROOT/.envrc"
+}
+
+envrc_parse() { # stdin: an .envrc; ENVRC_ARGS gets the operand of each non-comment PATH_add
+    local line
+    ENVRC_ARGS=()
+    while IFS= read -r line || [ -n "$line" ]; do
+        line=${line#"${line%%[![:space:]]*}"}
+        line=${line%"${line##*[![:space:]]}"}
+        case $line in
+            PATH_add[[:space:]]*)
+                line=${line#PATH_add}
+                ENVRC_ARGS+=("${line#"${line%%[![:space:]]*}"}")
+                ;;
+        esac
+    done
+}
+
+envrc_has() { # is $1 among the parsed PATH_add operands
+    local a
+    for a in ${ENVRC_ARGS[@]+"${ENVRC_ARGS[@]}"}; do
+        [ "$a" = "$1" ] && return 0
+    done
+    return 1
+}
+
+check_ignore() {
+    # plain git: check-ignore rejects --literal-pathspecs, and the path is fixed
+    probe_if ignore "dist/plugin/ is ignored" "dist/plugin/ is not ignored" \
+        agent "add /dist/plugin/ to .gitignore" \
+        git --no-optional-locks -C "$ROOT" check-ignore -q -- dist/plugin/
+}
+
+probe_if() { # id ok-detail missing-detail actor action cmd...: ok when cmd succeeds
+    local id=$1 ok=$2 miss=$3 actor=$4 action=$5
+    shift 5
+    if "$@" >/dev/null 2>&1; then emit ok "$id" "$ok"; else emit missing "$id" "$miss" "$actor" "$action"; fi
+}
+
+check_dist_include() {
+    probe_if dist-include "dist.include committed" "dist.include is absent or not committed" agent \
+        "create dist.include listing the shipped paths (manual/, not docs/), then commit it" \
+        in_head dist.include
+}
+
+check_dogfood() {
+    probe_if dogfood "dogfood copy present" \
+        "no dogfood copy; after it runs, relaunch claude from the repo root" \
+        shell "cd $QROOT && just dogfood" test -f "$ROOT/dist/plugin/.claude-plugin/plugin.json"
+}
+
+check_memory_url() {
+    local url=""
+    local ssh='^(ssh://)?[^@/]+@([^:/]+)(:[0-9]+)?[:/](.+)$'  # scp-like and ssh://
+    if [ -z "$GL_SUB" ]; then
+        emit skip memory-url "no gitlore-memory entry"
+        return
+    fi
+    url=$(g config --file "$ROOT/.gitmodules" --get submodule.gitlore-memory.url) || url=""
+    if [[ $url == https://* ]]; then
+        emit ok memory-url "gitlore-memory url is https"
+    elif [[ $url == */gitlore-placeholder ]]; then
+        emit missing memory-url "gitlore-memory url is the local-only placeholder" decision \
+            "no public memory remote exists; ask whether to create one or accept an uninstallable source clone"
+    elif [[ $url =~ $ssh ]]; then
+        emit missing memory-url "gitlore-memory url is ssh: $url" agent \
+            "rewrite the gitlore-memory url in .gitmodules to https://${BASH_REMATCH[2]}/${BASH_REMATCH[4]}, then git submodule sync and commit"
+    else
+        emit missing memory-url "gitlore-memory url is neither https nor ssh: $url" decision \
+            "choose a public https url for the gitlore-memory remote"
+    fi
+}
+
+check_origin() {
+    probe_if origin "origin remote set" "no origin remote" decision \
+        "ask whether to create a GitHub remote for the plugin (outward-facing)" \
+        g remote get-url origin
+}
+
+check_python() {
+    local entries=(bin hooks scripts) line found=""
+    if [ -f "$ROOT/dist.include" ]; then
+        entries=()
+        while IFS= read -r line || [ -n "$line" ]; do
+            case ${line%$'\r'} in '' | '#'* | /* | *..*) ;; *) entries+=("${line%$'\r'}") ;; esac
+        done < "$ROOT/dist.include"
+    fi
+    for line in ${entries[@]+"${entries[@]}"}; do
+        [ -e "$ROOT/$line" ] && found=$(first_python "$line") && [ -n "$found" ] && break
+    done
+    if [ -n "$found" ]; then
+        emit warn python "python in a shipped path: $found"
+    else
+        emit ok python "no python in the shipped paths"
+    fi
+}
+
+first_python() { # prints the first python file under the root-relative entry $1
+    local f
+    while IFS= read -r -d '' f; do
+        if is_python "${f#./}"; then
+            printf '%s' "${f#./}"
+            return 0
+        fi
+    done < <(cd "$ROOT" && find "./$1" -type f -print0 | sort -z)
+}
+
+is_python() { # root-relative path: *.py, or a python shebang on the first line
+    local shebang
+    case $1 in *.py) return 0 ;; esac
+    shebang=$(head -c 128 -- "$ROOT/$1" | tr -d '\000')
+    [[ ${shebang%%$'\n'*} == '#!'*python* ]]
+}
+
+main "$@"
