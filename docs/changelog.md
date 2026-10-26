@@ -2,6 +2,10 @@
 
 Design-significant changes only: decisions reversed, subsystems built or torn down, requirements added or dropped, a rationale that turned out false. Git history is the full record.
 
+## 2026-10-26 — the plugin shipped its first hook
+
+`claude --version` reports the installed binary, while a session runs the version it launched with, and an agent stamped an observation with the wrong one. The rule was already in prose and did not stop it, so D-10 adds a `PostToolUse` hook that annotates a mismatch. The plan's probing changed the brief's recipe: the last transcript line usually has a null `version`, so the reader takes the last non-null one. The hook made "no hooks of its own" in the Architecture and "four skills" in FR-1 false, and both were rewritten; `hooks` joined `dist.include`.
+
 ## 2026-10-26 — `skill-authoring` gained a reference node
 
 A new rule — text a plugin puts in front of an agent carries no conditional a script could have evaluated — landed in `skill-authoring`, and it took the hub past the ~200-line cap. The bundled-scripts section and its project-root subsection, about 93 lines and needed only when a skill must run a script, moved to `references/bundled-scripts.md`, verbatim apart from heading levels; the hub keeps a short summary routing by what a reader arrives holding. D-7 now records that `skill-authoring` is a hub plus one reference file, so it is no longer true that only `hook-authoring` has reference files. The rule is a design principle across skill prose, scripts and hooks rather than a hook rule, which is why it lives in `skill-authoring` with a one-line pointer from `hook-authoring`.

@@ -4,7 +4,7 @@ Building on the Claude Code harness: authoring and debugging hooks, writing
 skills, and verifying that the plugin code actually running is the code you
 just edited.
 
-Four skills, each firing on a moment you are already in rather than on a topic
+Four skills (and one small hook, below), each firing on a moment you are already in rather than on a topic
 word you have to think to type. They were cut from a shared memory tier because
 recall delivers only the first 4KB of a fact and stops — most of each body was
 unreachable by the mechanism meant to reach it. A skill body is reachable in
@@ -49,6 +49,14 @@ cannot choose its own version through the recipe, and the post-pull check that
 catches a silently broken justfile. The
 happy path stays in the toolkit's own `plugin-dev/README.md`, which every
 consumer already has.
+
+## The hook
+
+Alongside the skills the plugin ships one `PostToolUse` hook on `Bash`. When an
+agent runs `claude --version` and the installed version differs from the one the
+session is running, the hook tells the agent both and asks it to stamp
+observations with the running one. It is silent otherwise, never blocks, and
+needs `jq` on the `PATH`; without it, it does nothing.
 
 ## Development
 

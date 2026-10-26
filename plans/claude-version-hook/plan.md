@@ -120,6 +120,8 @@ first shipped hook is judged too high.
 
 ## Task sketch if a hook is approved
 
+Paths: the two helpers live in `hooks/`, not `scripts/` as first sketched, because `scripts/` does not ship and the hook needs them at run time.
+
 Contracts only; sized well under the 400-line cap, one commit each where
 noted. Red phases per `craft:test-discipline`: each test must fail on
 unchanged code by a failed assertion.
@@ -130,13 +132,13 @@ unchanged code by a failed assertion.
    paragraph, `docs/changelog.md` line; `dist.include` gains `hooks`.
    Invariant: D-1 to D-9 not reopened; `just precommit` passes.
 2. **Version extractor (red then green).** Interface:
-   `scripts/running-version.sh <transcript.jsonl>` prints the last non-null
+   `hooks/running-version.sh <transcript.jsonl>` prints the last non-null
    `version`, exit 1 and empty output if none. Cases (bats, fixtures built
    from the C2 line types): trailing null-version lines after a versioned
    one; no versioned line; mixed versions (last wins); spaces in the path;
    empty file.
 3. **Matcher (red then green).** Interface:
-   `scripts/is-claude-version-call.sh <command-string>` exit 0 iff a simple
+   `hooks/is-claude-version-call.sh <command-string>` exit 0 iff a simple
    command is `claude` with `--version`/`-v`. Cases: bare, `&&`-chained,
    piped, quoted-argument false positives (`echo`, `git commit -m`,
    `grep`), `-v` on other programs, `claude -p --version`? (state the

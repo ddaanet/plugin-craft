@@ -8,7 +8,7 @@
 
 ## Functional requirements
 
-**FR-1 · One plugin, four skills, each firing on a moment.** Every description names a moment a session is already in rather than a topic word. *Done (prose)* — the `description:` of each `skills/*/SKILL.md`.
+**FR-1 · One plugin, four skills and one hook, each firing on a moment.** Every skill description names a moment a session is already in rather than a topic word; the hook fires on the one moment with a mechanical trigger, `claude --version` (D-10). *Done (prose)* for the skills — the `description:` of each `skills/*/SKILL.md`; *Done* for the hook — `hooks/hooks.json`, pinned by `tests/claude-version-hook.bats`.
 
 **FR-2 · `hook-authoring` carries the whole hook surface.** The stdin payload, the stdout control surface, the channel mechanics, the `PreToolUse` permission pipeline, the scripted-harness comparison and containing a plugin's own agents, whose frontmatter hooks are dropped. *Done (prose)* — `skills/hook-authoring/`.
 
@@ -38,13 +38,13 @@
 
 ## Architecture
 
-A Claude Code plugin with no commands, no agents and no hooks of its own. Four skills under `skills/`, discovered from the plugin root; `hook-authoring` additionally carries `references/output-channels.md`, `references/input-and-harness.md` and `references/plugin-agent-containment.md`, which its `SKILL.md` routes to by what a reader arrives holding; `skill-authoring` carries `references/bundled-scripts.md`, routed to the same way.
+A Claude Code plugin with no commands and no agents, and one hook: `hooks/hooks.json` registers a `PostToolUse` hook on `Bash` that runs `hooks/claude-version.sh`, with two helpers beside it, `running-version.sh` and `is-claude-version-call.sh`. Four skills under `skills/`, discovered from the plugin root; `hook-authoring` additionally carries `references/output-channels.md`, `references/input-and-harness.md` and `references/plugin-agent-containment.md`, which its `SKILL.md` routes to by what a reader arrives holding; `skill-authoring` carries `references/bundled-scripts.md`, routed to the same way.
 
 `plugin-dev/` is the `claude-plugin-dev` toolkit, vendored by `git subtree` at a `dist-vX.Y.Z` tag. It supplies `just release`, `resume-release`, `check-version` and `update-plugin-dev` through `release.just`, and a `PreToolUse(Write|Edit)` version-guard hook wired into `.claude/settings.json`. The directory is generated content: changes go to the toolkit repo and arrive here through `just update-plugin-dev`.
 
 `memory/` is a gitlore submodule with the shared `ddaanet` tier mounted at `memory/ddaanet/`. That tier is this plugin's source material and is shared with other repositories, so it is read for content and edited only to retire what has migrated.
 
-`justfile` imports the toolkit's recipes and defines the two the toolkit requires. `precommit` validates the plugin manifest, syntax-checks `scripts/`, and runs `check-skill-text.sh`. `prerelease` depends on `precommit` and adds nothing yet.
+`justfile` imports the toolkit's recipes and defines the two the toolkit requires. `precommit` validates the plugin manifest and `hooks/hooks.json`, syntax-checks and shellchecks `scripts/` and `hooks/`, and runs `check-skill-text.sh` and the bats suites. `prerelease` depends on `precommit` and adds nothing yet.
 
 `scripts/check-skill-text.sh` walks `skills/**/*.md` NUL-delimited and fails on three patterns: a `[[wikilink]]`, a `memory/` path, and a bare `.md` filename matching a known source fact. It prints `file:line:text` for each hit and exits non-zero.
 
@@ -68,7 +68,13 @@ A Claude Code plugin with no commands, no agents and no hooks of its own. Four s
 
 **D-9 · `my human partner` phrasing ships as-is in skill bodies.** It reads as house voice rather than as a defect, on the `superpowers` precedent. A line carrying it is rewritten only where it is separately an imperative-form violation, and then for that reason.
 
+**D-10 · A shipped hook annotates `claude --version`.** `claude --version` prints the installed binary's version, but a session keeps the version it launched with, so after an update the two differ and an agent that stamps an observation with the printed version records the wrong build. The prose rule existed and did not prevent it, since nothing makes an agent read it at the moment it runs the command, and the trigger is a keyword. The hook runs on `PostToolUse` for `Bash`, takes the installed version from the call's own `tool_response.stdout`, takes the running version from the last non-null `version` in `transcript_path` (the final transcript line often has none, so the last line is not enough), and speaks only on a mismatch, through `additionalContext` alone. It matches the program word `claude` with `--version` or `-v`, not a substring, so `echo "claude --version"` stays quiet. It is bash plus `jq`, as the existing scripts are, and lives in `hooks/` because `scripts/` does not ship. This is the plugin's first shipped executable code, which is why FR-1 and the Architecture changed. **Reopen-if** Claude Code exposes the running version to hooks directly.
+
 ## Rejected alternatives
+
+**Prose only for the `claude --version` trap (D-10).** The rule was already written down and did not stop the incident; the trigger is a literal command, which suits a hook better than a skill.
+
+**Reading the version from `CLAUDE_CODE_EXECPATH`.** Undocumented, unverified inside a hook's environment, and dependent on the versioned install layout, so a different install fails silently. The transcript field is documented.
 
 **Naming it `craft:plugin-dev`.** `plugin-dev/` is the vendored toolkit directory and `plugin-dev:` is an existing skill namespace. A third meaning for the same word makes every reference ambiguous.
 
@@ -91,6 +97,8 @@ A Claude Code plugin with no commands, no agents and no hooks of its own. Four s
 **L-1 · Nothing guarantees a symptom-shaped description fires.** FR-5's trigger is an observation with no keyword, so the description has to supply the vocabulary a session will be holding. Whether it matches is a property of the model at match time and is not testable from inside the repository.
 
 **L-2 · The FR-7 check cannot see every dangling identifier.** It matches wikilinks, `memory/` paths and known fact filenames. Internal requirement or decision ids (`FR5a`, `(D14)`) and paths into another repository pass it and need a reader.
+
+**L-3 · The `claude --version` hook has residual bounds.** Wrappers (`env X=1 claude -v`, `command claude -v`) and a path-qualified `claude` are not matched, and a consumer without `jq` gets silence. Both are deliberate: a false annotation costs more than a missed one. Behaviour across a real mid-session update is untested.
 
 ## Non-goals
 
