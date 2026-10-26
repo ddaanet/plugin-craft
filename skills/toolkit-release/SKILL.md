@@ -15,32 +15,29 @@ the part those files do not carry.
 ## `just release` must run unsandboxed
 
 The marketplace bump is the recipe's last step and its only write outside the
-repo. Current toolkits probe the marketplace directory in preflight, so a
-sandboxed `just release` refuses up front with nothing public done. Toolkits
-before the preflight probe, and `just resume-release` today, meet the write
-only at the bump and die there on `mv: inter-device move failed … unable to
-remove target: Read-only file system` against the marketplace path. Everything
-before it — version commit, tag, branch push, GitHub release — has already
-landed, so that run leaves a half-done release rather than a failed one;
-`just resume-release`, unsandboxed, completes it and is idempotent.
+repo. From toolkit 0.5.1 a sandboxed `just release` refuses in preflight, before
+anything public, and a sandboxed `just resume-release` refuses at the same
+probe (`… is not writable`), whose message names the fix. Toolkits before 0.5.1
+met the write only at the bump and died there on `mv: inter-device move failed
+… Read-only file system`, after the version commit, tag, branch push and GitHub
+release had landed; `just resume-release`, unsandboxed, completes such a release
+and is idempotent.
 
-The durable fix is a `just release *` and a `just resume-release *` entry in
-`sandbox.excludedCommands`, which sets the unsandboxing flag on the call
+The fix is the `sandbox.excludedCommands` entries and the bare call described
+in `plugin-dev/README.md`. An entry sets the unsandboxing flag on the call
 unconditionally. It does **not** auto-approve: an excluded command still goes
 through full permission validation. What it buys is that the exclusion is
 static, so nothing depends on an agent choosing to pass an override flag.
 
-Issue both recipes bare: alone in the Bash call, with no `cd … &&` prefix and
-no trailing `; echo`. A compound call is not covered by the entry and stays
-sandboxed. Never pass `dangerouslyDisableSandbox` on them: the auto-mode
-classifier denied `cd <plugin root> && just release; echo …` carrying that flag
-as a safety-bypass flag although the user had named the release, with nothing
-started (Claude Code 2.1.296, one run, 2026-10-15). The same recipe bare ran to
-completion, marketplace push included.
-
-To check whether a call will run excluded, add the Bash tool's
-`allowed_domains` parameter: the harness rejects it on a command that would not
-run sandboxed, and a rejection runs nothing.
+What the README does not carry. Under auto mode,
+`cd <plugin root> && just release; echo …` with `dangerouslyDisableSandbox`
+was denied as a safety-bypass flag although the user had named the release, and
+nothing started; the bare `just release` ran to completion, marketplace push
+included (Claude Code 2.1.296, one run, 2026-10-15). To check whether a call
+will run excluded, add the Bash tool's `allowed_domains` parameter: under auto
+mode the harness rejects it on a command that would not run sandboxed, and a
+rejection runs nothing; in any other mode the parameter is ignored, so no
+rejection proves nothing.
 
 The classifier also weighs whether the release is what the user asked for.
 Reached for on the agent's own initiative — mid-way through executing a task

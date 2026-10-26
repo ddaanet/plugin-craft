@@ -2,10 +2,6 @@
 
 Design-significant changes only: decisions reversed, subsystems built or torn down, requirements added or dropped, a rationale that turned out false. Git history is the full record.
 
-## Unreleased — `toolkit-release` says to issue the release recipes bare
-
-The skill now states that `just release` and `just resume-release` go alone in the Bash call and never carry `dangerouslyDisableSandbox`, which the auto-mode classifier denied on a release the user had named; the half-landing it describes now applies to `resume-release` and older toolkits, since 0.12.0 probes the marketplace in preflight.
-
 ## 2026-09-17 — the toolkit closed the first-release gap, and the section went with it
 
 Toolkit 0.8.0 landed the fix for the gap the first release surfaced: detection is by tag alone, the version-guard hook's message branches on that predicate and names the maintainer's edit rather than a recipe that cannot select a version, and the shipped README documents setting the version and committing it. D-5's reopen-if fired as written, so `toolkit-release`'s first-release section was deleted rather than updated — what it carried is now in a file every consumer of the toolkit already has.
