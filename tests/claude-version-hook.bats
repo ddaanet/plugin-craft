@@ -287,3 +287,23 @@ run_hook() {
     [ "$status" -eq 0 ]
     [ -z "$output" ]
 }
+
+@test "hook finishes a 50 KB non-matching heredoc command within 5 seconds" {
+    # Cost must not grow quadratically with command length: the matcher runs
+    # on every Bash call, and heredocs of base64 text are routine.
+    tline user 2.1.281 > "$transcript"
+    {
+        printf "cat > out.b64 <<'EOF'\n"
+        seq 1 12000 | base64
+        printf 'EOF\n'
+    } > "$work/command.txt"
+    [ "$(wc -c < "$work/command.txt")" -ge 50000 ]
+    jq -n --rawfile c "$work/command.txt" --arg t "$transcript" '
+        {hook_event_name:"PostToolUse", tool_name:"Bash",
+         tool_input:{command:$c}, tool_response:{stdout:"done"},
+         transcript_path:$t}' > "$work/payload.json"
+    run timeout 5 bash "$hook" < "$work/payload.json"
+    [ "$status" -ne 124 ]
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}
