@@ -41,6 +41,7 @@ slugs="$slugs|sandbox-effects|classifier-denied-self-config|claude-project-dir"
 slugs="$slugs|cc-subagent-approval|test-the-invocation-path|cc-agent-discovery"
 slugs="$slugs|sessionstart-resume-cwd|cc-command-namespacing|directive-states-acts"
 slugs="$slugs|cc-worktree-memory-freeze|green-is-not-evidence"
+slugs="$slugs|plugin-agent-hooks-ignored|plugin-hook-fail-open"
 
 # Checked on every line, code included. The wikilink pattern is in the awk
 # program below, since it applies to the line with code removed.

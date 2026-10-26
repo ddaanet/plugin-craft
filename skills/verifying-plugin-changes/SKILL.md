@@ -91,8 +91,8 @@ error. Until a reload, fall back to the previously-shipped path and say so; neve
 report a mid-session plugin edit as "now active" without one.
 
 Exception: bundled *scripts* invoked by a bare-name `bin/` shim take effect
-immediately — PATH is set at session start but points at the live directory
-(see `plugin-craft:skill-authoring`).
+immediately, since the file is read on each call. How such a script is reached
+is in `../skill-authoring/references/bundled-scripts.md`.
 
 ## Hook event registration is frozen; script bodies are not
 

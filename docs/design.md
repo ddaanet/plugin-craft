@@ -14,7 +14,7 @@
 
 **FR-3 · A deny is taught as splitting three ways by audience.** Verdict on `permissionDecisionReason`, recovery on `additionalContext`, one line on `systemMessage`. *Done (prose)* — `skills/hook-authoring/SKILL.md` §2.
 
-**FR-4 · `skill-authoring` carries what makes a skill findable and self-sufficient.** Description shape and its per-session cost, what `allowed-tools` grants, which second-person forms the imperative rule targets, and how a bundled script is reached when the plugin env vars are absent. *Done (prose)* — `skills/skill-authoring/SKILL.md`.
+**FR-4 · `skill-authoring` carries what makes a skill findable and self-sufficient.** Description shape and its per-session cost, what `allowed-tools` grants, which second-person forms the imperative rule targets, how a bundled script is reached when the plugin env vars are absent, and the rule that agent-bound text carries no conditional a script could have evaluated. *Done (prose)* — `skills/skill-authoring/`.
 
 **FR-5 · `verifying-plugin-changes` fires on a symptom with no keyword.** An edit to plugin code that appears not to work while nothing errors. *Done (prose)* — the `description:` of `skills/verifying-plugin-changes/SKILL.md`; see L-1.
 
@@ -22,7 +22,7 @@
 
 **FR-7 · No shipped skill text cites the memory store.** No wikilink, no `memory/` path, no bare fact filename. *Done* — `scripts/check-skill-text.sh`, pinned by `just precommit`.
 
-**FR-8 · Every date and build version that grounds a claim survives the move.** Stripping one turns evidence into assertion, and these are the claims most likely to rot. *Done (prose)* — all six skill files.
+**FR-8 · Every date and build version that grounds a claim survives the move.** Stripping one turns evidence into assertion, and these are the claims most likely to rot. *Done (prose)* — all eight skill files.
 
 **FR-9 · Migrated facts are retired from the tier, and inbound pointers are repointed.** Every pointer into a retired fact, from a fact that stays, names the skill that now carries the content. *Done (prose)* — `memory/MEMORY.md` and the `ddaanet` tier.
 
@@ -38,7 +38,7 @@
 
 ## Architecture
 
-A Claude Code plugin with no commands, no agents and no hooks of its own. Four skills under `skills/`, discovered from the plugin root; `hook-authoring` additionally carries `references/output-channels.md`, `references/input-and-harness.md` and `references/plugin-agent-containment.md`, which its `SKILL.md` routes to by what a reader arrives holding.
+A Claude Code plugin with no commands, no agents and no hooks of its own. Four skills under `skills/`, discovered from the plugin root; `hook-authoring` additionally carries `references/output-channels.md`, `references/input-and-harness.md` and `references/plugin-agent-containment.md`, which its `SKILL.md` routes to by what a reader arrives holding; `skill-authoring` carries `references/bundled-scripts.md`, routed to the same way.
 
 `plugin-dev/` is the `claude-plugin-dev` toolkit, vendored by `git subtree` at a `dist-vX.Y.Z` tag. It supplies `just release`, `resume-release`, `check-version` and `update-plugin-dev` through `release.just`, and a `PreToolUse(Write|Edit)` version-guard hook wired into `.claude/settings.json`. The directory is generated content: changes go to the toolkit repo and arrive here through `just update-plugin-dev`.
 
@@ -62,7 +62,7 @@ A Claude Code plugin with no commands, no agents and no hooks of its own. Four s
 
 **D-6 · Distributed skill text never cites the memory store, and a script enforces it.** Consumers do not have the store, so a wikilink or a `memory/` path dangles for every one of them. The criteria are inlined at write time. Review alone is insufficient because the failure is silent — the skill reads as complete with a dead pointer in it — so `check-skill-text.sh` runs from `precommit`.
 
-**D-7 · `hook-authoring` is a hub plus three reference files.** Its merged source is roughly 25 KB, past the point where one file reads as a routing document. `SKILL.md` holds what a reader needs before knowing which question they have: the control surface, the three-way deny split, and how to choose a channel. The reference files hold the mechanism. The other three skills are single files and do not need the hop.
+**D-7 · `hook-authoring` is a hub plus three reference files, and `skill-authoring` a hub plus one.** `hook-authoring`'s merged source is roughly 48 KB, past the point where one file reads as a routing document. `SKILL.md` holds what a reader needs before knowing which question they have: the control surface, the three-way deny split, and how to choose a channel. The reference files hold the mechanism. `skill-authoring` was a single file until the conditionals rule pushed it past the ~200-line hub cap; the bundled-scripts material, the largest block and the one a reader needs only when a skill must run a script, moved to `references/bundled-scripts.md`, leaving a short routing summary. The other two skills are single files and do not need the hop.
 
 **D-8 · Migrated facts are retired from the tier; two are reduced rather than removed.** Leaving them costs index bytes against a capped loader for content now shipped in full. `hook-output-channels` kept §7 until `craft:directive-writing` took it, and was retired on 2026-09-24 once its last mechanism, ANSI rendering on `systemMessage`, landed here. `claude-plugin-dev` keeps the `edify`-does-not-vendor exception, which is in neither the vendored README nor the skill. Every inbound pointer from a fact that stays was repointed at the skill carrying the content.
 
