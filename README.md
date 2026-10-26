@@ -1,7 +1,7 @@
 # plugin-craft
 
-Building on the Claude Code harness: authoring and debugging hooks, writing
-skills, and verifying that the plugin code actually running is the code you
+Building on the Claude Code harness: setting up a plugin repository, authoring
+and debugging hooks, writing skills, and verifying that the plugin code actually running is the code you
 just edited.
 
 Five skills, each firing on a moment you are already in rather than on a topic

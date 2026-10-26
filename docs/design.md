@@ -72,7 +72,7 @@ A Claude Code plugin with no commands, no agents and no hooks of its own, and on
 
 **D-9 · `my human partner` phrasing ships as-is in skill bodies.** It reads as house voice rather than as a defect, on the `superpowers` precedent. A line carrying it is rewritten only where it is separately an imperative-form violation, and then for that reason.
 
-**D-10 · The script detects, the body judges.** The probe checks only what no downstream gate reports before harm: the release preflight refuses a missing `MARKETPLACE_DIR`, a sandboxed run and a missing `origin` before anything public, naming the fix, so those are invoked, not pre-checked. The probe ships as an entry script plus a sourced lib to keep both under the 400-line cap. **Reopen-if** the toolkit or gitlore absorbs a step, as D-5's did: the body shrinks, and the probe keeps the check only if it still reports earlier.
+**D-10 · The script detects, the body judges.** The probe checks only what no downstream gate reports before harm: the release preflight refuses a missing `MARKETPLACE_DIR` and a sandboxed run before anything public, naming the fix, so those are invoked, not pre-checked. `origin` is probed early anyway, because creating the remote is an outward-facing decision. The probe ships as an entry script plus a sourced lib to keep both under the 400-line cap. **Reopen-if** the toolkit or gitlore absorbs a step, as D-5's did: the body shrinks, and the probe keeps the check only if it still reports earlier.
 
 ## Rejected alternatives
 

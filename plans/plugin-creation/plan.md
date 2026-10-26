@@ -329,8 +329,9 @@ All in `docs/design.md`, plus a dated `docs/changelog.md` entry.
   and my human partner should see the wording.
 - **D-10 (new)** — the script detects, the body judges. The probe checks only
   what no downstream gate reports before harm: the release preflight refuses
-  a missing `MARKETPLACE_DIR`, a sandboxed run and a missing `origin` before
-  anything public, naming the fix, so those are invoked, not pre-checked.
+  a missing `MARKETPLACE_DIR` and a sandboxed run before anything public,
+  naming the fix, so those are invoked, not pre-checked. `origin` is probed
+  early anyway, because creating the remote is an outward-facing decision.
   **Reopen-if** the toolkit or gitlore absorbs a step, as D-5's did: the body
   shrinks, and the probe keeps the check only if it still reports earlier.
 - **Architecture** — "no commands, no agents and no hooks" gains "and one

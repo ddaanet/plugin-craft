@@ -27,8 +27,10 @@ actor, then run the probe again. Stop when it says `next none`.
 - **shell** — a command my human partner runs in their own terminal. Print the
   action verbatim in a code block, wait, then re-run the probe. `just dogfood`,
   `bash plugin-dev/install.sh`, the toolkit install block and `direnv allow`
-  never go through the agent's Bash: they write `.claude/settings.json`, which
-  the sandbox denies, or need the human's shell environment.
+  never go through the agent's Bash. The install steps write
+  `.claude/settings.json`, which the sandbox denies; `just dogfood` is
+  excluded because the sandbox masks dotfiles in the project root, which a
+  sandboxed sync would copy or delete (`plugin-dev/manual/dogfood.md`).
 - **decision** — ask my human partner inline, with a stated default so the
   thread proceeds without a round-trip.
 

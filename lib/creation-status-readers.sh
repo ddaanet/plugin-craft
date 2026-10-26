@@ -25,7 +25,7 @@ envrc_parse() { # stdin: an .envrc; ENVRC_ARGS gets the operand of each non-comm
     done
 }
 
-envrc_operand() { # the first word of $1: quotes around it, or a trailing comment, are dropped
+envrc_operand() { # the operand in $1: its quotes, or a trailing comment, are dropped
     local s=$1 q
     s=${s#"${s%%[![:space:]]*}"}
     q=${s:0:1}
