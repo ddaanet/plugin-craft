@@ -11,6 +11,8 @@
 # (stderr only). Reads only: git runs with --no-optional-locks, nothing writes
 # or touches the network. Residual bound: a tab or newline inside a path is
 # flattened to a blank, so a shell action for such a path would not paste.
+# The .envrc reader strips one pair of quotes or a trailing comment from a
+# PATH_add operand; escapes and expansions are not modelled.
 
 set -u
 export LC_ALL=C
@@ -285,11 +287,23 @@ envrc_parse() { # stdin: an .envrc; ENVRC_ARGS gets the operand of each non-comm
         line=${line%"${line##*[![:space:]]}"}
         case $line in
             PATH_add[[:space:]]*)
-                line=${line#PATH_add}
-                ENVRC_ARGS+=("${line#"${line%%[![:space:]]*}"}")
+                ENVRC_ARGS+=("$(envrc_operand "${line#PATH_add}")")
                 ;;
         esac
     done
+}
+
+envrc_operand() { # the first word of $1: quotes around it, or a trailing comment, are dropped
+    local s=$1 q
+    s=${s#"${s%%[![:space:]]*}"}
+    q=${s:0:1}
+    if [[ $q == \' || $q == \" ]] && [[ ${s:1} == *"$q"* ]]; then
+        s=${s:1}
+        printf '%s' "${s%%"$q"*}"
+        return
+    fi
+    s=${s%%[[:space:]]#*}
+    printf '%s' "${s%"${s##*[![:space:]]}"}"
 }
 
 envrc_has() { # is $1 among the parsed PATH_add operands
