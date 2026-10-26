@@ -58,6 +58,11 @@ stale nested cache. Tell in gitlore: a flat `/gitlore:resolve` in the skill list
 means `--plugin-dir`/fresh cache; double-prefixed `/gitlore:gitlore:resolve`
 means a stale nested cache.
 
+A related symptom with no stale code behind it: a hook in a plugin agent's
+`agents/*.md` frontmatter never fires and nothing errors — Claude Code drops it
+at load and says so only in the `--debug` log. `plugin-craft:hook-authoring`
+owns that fact and the containment that works instead.
+
 ## Skill bodies are snapshotted at session start
 
 Editing a plugin's own files mid-session does not make the change live in that
