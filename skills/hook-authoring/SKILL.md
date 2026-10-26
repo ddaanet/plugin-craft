@@ -123,3 +123,9 @@ Route user-facing notices through `systemMessage`, not stderr-on-exit-0 and **no
 - **What arrives on stdin, which harness (`--print`, the Agent SDK) fires
   which event, or two hooks on one event sharing a file or a step** →
   `references/input-and-harness.md`.
+- **A plugin agent's frontmatter `hooks:` that never fires and nothing errors
+  (`sets hooks, which is ignored for plugin agents`), containing a plugin's own
+  agents through `hooks/hooks.json` keyed on `agent_type`, a session-wide guard
+  that fails open until the caller is identified and closed after, the
+  `SessionStart` self-check and the agent-opening tripwire** →
+  `references/plugin-agent-containment.md`.

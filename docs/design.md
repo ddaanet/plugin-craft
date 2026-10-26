@@ -10,7 +10,7 @@
 
 **FR-1 · One plugin, four skills, each firing on a moment.** Every description names a moment a session is already in rather than a topic word. *Done (prose)* — the `description:` of each `skills/*/SKILL.md`.
 
-**FR-2 · `hook-authoring` carries the whole hook surface.** The stdin payload, the stdout control surface, the channel mechanics, the `PreToolUse` permission pipeline and the scripted-harness comparison. *Done (prose)* — `skills/hook-authoring/`.
+**FR-2 · `hook-authoring` carries the whole hook surface.** The stdin payload, the stdout control surface, the channel mechanics, the `PreToolUse` permission pipeline, the scripted-harness comparison and containing a plugin's own agents, whose frontmatter hooks are dropped. *Done (prose)* — `skills/hook-authoring/`.
 
 **FR-3 · A deny is taught as splitting three ways by audience.** Verdict on `permissionDecisionReason`, recovery on `additionalContext`, one line on `systemMessage`. *Done (prose)* — `skills/hook-authoring/SKILL.md` §2.
 
@@ -38,7 +38,7 @@
 
 ## Architecture
 
-A Claude Code plugin with no commands, no agents and no hooks of its own. Four skills under `skills/`, discovered from the plugin root; `hook-authoring` additionally carries `references/output-channels.md` and `references/input-and-harness.md`, which its `SKILL.md` routes to by what a reader arrives holding.
+A Claude Code plugin with no commands, no agents and no hooks of its own. Four skills under `skills/`, discovered from the plugin root; `hook-authoring` additionally carries `references/output-channels.md`, `references/input-and-harness.md` and `references/plugin-agent-containment.md`, which its `SKILL.md` routes to by what a reader arrives holding.
 
 `plugin-dev/` is the `claude-plugin-dev` toolkit, vendored by `git subtree` at a `dist-vX.Y.Z` tag. It supplies `just release`, `resume-release`, `check-version` and `update-plugin-dev` through `release.just`, and a `PreToolUse(Write|Edit)` version-guard hook wired into `.claude/settings.json`. The directory is generated content: changes go to the toolkit repo and arrive here through `just update-plugin-dev`.
 
@@ -62,7 +62,7 @@ A Claude Code plugin with no commands, no agents and no hooks of its own. Four s
 
 **D-6 · Distributed skill text never cites the memory store, and a script enforces it.** Consumers do not have the store, so a wikilink or a `memory/` path dangles for every one of them. The criteria are inlined at write time. Review alone is insufficient because the failure is silent — the skill reads as complete with a dead pointer in it — so `check-skill-text.sh` runs from `precommit`.
 
-**D-7 · `hook-authoring` is a hub plus two reference files.** Its merged source is roughly 25 KB, past the point where one file reads as a routing document. `SKILL.md` holds what a reader needs before knowing which question they have: the control surface, the three-way deny split, and how to choose a channel. The reference files hold the mechanism. The other three skills are single files and do not need the hop.
+**D-7 · `hook-authoring` is a hub plus three reference files.** Its merged source is roughly 25 KB, past the point where one file reads as a routing document. `SKILL.md` holds what a reader needs before knowing which question they have: the control surface, the three-way deny split, and how to choose a channel. The reference files hold the mechanism. The other three skills are single files and do not need the hop.
 
 **D-8 · Migrated facts are retired from the tier; two are reduced rather than removed.** Leaving them costs index bytes against a capped loader for content now shipped in full. `hook-output-channels` kept §7 until `craft:directive-writing` took it, and was retired on 2026-09-24 once its last mechanism, ANSI rendering on `systemMessage`, landed here. `claude-plugin-dev` keeps the `edify`-does-not-vendor exception, which is in neither the vendored README nor the skill. Every inbound pointer from a fact that stays was repointed at the skill carrying the content.
 
