@@ -325,6 +325,29 @@ assert_shape() {
     assert_next none -
 }
 
+# envrc_ok_with <.envrc content>: a correctly ordered file in some spelling
+envrc_ok_with() {
+    mk_complete
+    printf '%b' "$1" > "$ROOT/.envrc"
+    commit_all
+    probe
+    [ "$status" -eq 0 ]
+    assert_status ok envrc
+    assert_next none -
+}
+
+@test "envrc with double-quoted PATH_add operands: envrc ok" {
+    envrc_ok_with 'PATH_add ".gitlore/bin"\nPATH_add "plugin-dev/bin"\n'
+}
+
+@test "envrc with single-quoted PATH_add operands: envrc ok" {
+    envrc_ok_with "PATH_add '.gitlore/bin'\nPATH_add 'plugin-dev/bin'\n"
+}
+
+@test "envrc with trailing comments on PATH_add lines: envrc ok" {
+    envrc_ok_with 'PATH_add .gitlore/bin # memory\nPATH_add plugin-dev/bin # toolkit\n'
+}
+
 @test "dist/plugin not ignored: next is ignore" {
     mk_complete
     : > "$ROOT/.gitignore"
