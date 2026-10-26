@@ -17,10 +17,8 @@ the part those files do not carry.
 The marketplace bump is the recipe's last step and its only write outside the
 repo. From toolkit 0.5.1 a sandboxed `just release` refuses in preflight, before
 anything public, and a sandboxed `just resume-release` refuses at the same
-probe (`… is not writable`), whose message names the fix. Toolkits before 0.5.1
-met the write only at the bump and died there on `mv: inter-device move failed
-… Read-only file system`, after the version commit, tag, branch push and GitHub
-release had landed; `just resume-release`, unsandboxed, completes such a release
+probe (`… is not writable`), whose message names the fix. Unsandboxed,
+`just resume-release` completes a release that stopped after its public steps
 and is idempotent.
 
 The fix is the `sandbox.excludedCommands` entries and the bare call described
