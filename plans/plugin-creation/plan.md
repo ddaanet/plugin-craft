@@ -34,7 +34,7 @@ The order is the brief's decided one: gitlore, create-plugin, the toolkit.
   entries for `just release *` and `just resume-release *` (a settings write).
   `/gitlore:install` is a candidate sixth: its installer must run with the
   sandbox disabled, and `toolkit-release` records that flag being denied under
-  auto mode (open question 4).
+  auto mode (decision 4).
 - **What `install.sh` leaves to the consumer — mostly holds.** The brief
   missed that a repo with no justfile gets one with `precommit` and
   `prerelease` defined (true at 0.9.3 too); only an existing justfile is left
@@ -50,7 +50,7 @@ The order is the brief's decided one: gitlore, create-plugin, the toolkit.
   placeholder. Commit `75554a8` in this repo is that fix applied after the
   fact. Inferred, not probed: a plugin with a `dist.include` installs from the
   `dist` branch, which holds no gitlink, so the url may matter only for a
-  source clone (open question 5).
+  source clone (decision 5).
 
 Not in the brief, and on the route now:
 
@@ -76,9 +76,9 @@ default.
 1. `repo` — `git init` at the plugin root. Agent.
 2. `gitlore` — `/gitlore:install`, which confirms the memory remote with my
    human partner itself; then commit what it staged, through gitlore's own
-   memory gate. Agent (open question 4).
+   memory gate. Agent (decision 4).
 3. `manifest` — `/plugin-dev:create-plugin`, its Phase 7 replaced by step 9's
-   dogfood; commit. Agent (open question 3).
+   dogfood; commit. Agent (decision 3).
 4. `toolkit` — the install block from `plugin-dev/README.md` (no vendored
    copy exists yet, so the probe prints it). Shell. Then commit
    `plugin-dev justfile .claude/settings.json`. Agent.
@@ -101,18 +101,20 @@ default.
 
 ## Executable steps
 
-**S1 — probe tests (red).** `tests/plugin-craft-route.bats` with the cases in
-"Tests" below, run through `plugin-dev/run-bats.sh`; each fails for want of
-the script, then for want of the behaviour it names. Sonnet authors; a
-different agent reviews the red.
+**S1 — probe tests (red).** `tests/plugin-craft-creation-status.bats` with
+the cases in "Tests" below, run through `plugin-dev/run-bats.sh`; each fails
+for want of the script, then for want of the behaviour it names. Sonnet
+authors; a different agent reviews the red.
 
-**S2 — probe script (green).** `bin/plugin-craft-route`, contract below. Haiku
-implements against the reviewed tests; a Sonnet reviewer checks it.
+**S2 — probe script (green).** `bin/plugin-craft-creation-status`, contract
+below. Haiku implements against the reviewed tests; a Sonnet reviewer checks
+it.
 
 **S3 — wiring.** Add `bin` to `dist.include` (today it ships `.claude-plugin`,
 `skills` and `README.md` only, so the dogfood copy and the `dist` branch would
-lack the script). Extend `precommit` with `shellcheck bin/plugin-craft-route`
-and `plugin-dev/run-bats.sh tests/`. Run `just --list`, then `just precommit`.
+lack the script). Extend `precommit` with
+`shellcheck bin/plugin-craft-creation-status` and
+`plugin-dev/run-bats.sh tests/`. Run `just --list`, then `just precommit`.
 
 **S4 — skill.** `skills/plugin-creation/SKILL.md`, under ~200 lines: the
 description below, then the body's judgement (below), routed by the probe's
@@ -128,7 +130,7 @@ sentence in `verifying-plugin-changes` (line 24): "load with `--plugin-dir`"
 gains "or, with the toolkit vendored, through its dogfood launcher", since the
 new skill routes away from the bare flag.
 
-**S7 — dogfood, the day it ships.** Run `plugin-craft-route` against
+**S7 — dogfood, the day it ships.** Run `plugin-craft-creation-status` against
 plugin-craft's main checkout and, read-only, against sandbox-lies, handoff and
 gitlore: each should report `next none`, and any finding is either a probe bug
 or a real gap in that repo (report the second, never fix it there). Then walk a
@@ -140,11 +142,11 @@ proves the tests bite.
 
 ## Probe contract
 
-`bin/plugin-craft-route [<dir>]` — bash, one file, no shim (one entry point;
-`plugin-craft:skill-authoring` reserves the shim for logic with components).
-The name is plugin-prefixed because every enabled plugin's `bin/` shares PATH.
-Invoked by bare name from the skill body, always with the repo path given
-explicitly, since the session's cwd drifts.
+`bin/plugin-craft-creation-status [<dir>]` — bash, one file, no shim (one entry
+point; `plugin-craft:skill-authoring` reserves the shim for logic with
+components). The name is plugin-prefixed because every enabled plugin's `bin/`
+shares PATH. Invoked by bare name from the skill body, always with the repo path
+given explicitly, since the session's cwd drifts.
 
 **Pre:** `git` and `jq` on PATH; `just` for the `recipes` check only.
 **Post:** reads only, writes nothing, touches no network: the tree,
@@ -218,12 +220,13 @@ What each check reads:
 
 ## Tests
 
-`tests/plugin-craft-route.bats`. Each case builds its state in a scratch repo
-under `$BATS_TEST_TMPDIR` from a shared helper (no network: the toolkit is a
-stub `plugin-dev/VERSION` and settings file, gitlore a `.gitmodules` entry, a
-gitlink placed with `git update-index --cacheinfo 160000,…` and a stub
-`.gitlore/bin/claude`), and asserts the `next` line and the exit status; the
-cases marked † also assert one status line.
+`tests/plugin-craft-creation-status.bats`. Each case builds its state in a
+scratch repo under `$BATS_TEST_TMPDIR` from a shared helper (no network: the
+toolkit is a stub `plugin-dev/VERSION` and settings file, gitlore a
+`.gitmodules` entry, a gitlink placed with
+`git update-index --cacheinfo 160000,…` and a stub `.gitlore/bin/claude`), and
+asserts the `next` line and the exit status; the cases marked † also assert one
+status line.
 
 - `empty dir: next is repo, agent git init`
 - `subdirectory of a repo: repo blocked, exit 1` †
@@ -314,9 +317,10 @@ All in `docs/design.md`, plus a dated `docs/changelog.md` entry.
 - **FR-10 (new)** — `plugin-creation` owns the sequence across gitlore,
   create-plugin and the toolkit, and nothing the shipped docs carry; it routes
   away from a bare `--plugin-dir` to the dogfood launcher. *Done (prose)*.
-- **FR-11 (new)** — the route's state is read by `bin/plugin-craft-route`,
-  read-only, one line per check and a `next` line. *Done* — pinned by
-  `tests/plugin-craft-route.bats` in `precommit`.
+- **FR-11 (new)** — the route's state is read by
+  `bin/plugin-craft-creation-status`, read-only, one line per check and a `next`
+  line. *Done* — pinned by `tests/plugin-craft-creation-status.bats` in
+  `precommit`.
 - **D-1, amended in place** — "Five skills, one plugin", and the shared moment
   widens to "setting up a repository to build on the harness, building on it,
   or debugging it". This changes the count and the moment sentence; the
@@ -370,33 +374,27 @@ The new skill owns the sequence and absorbs nothing. It links to
 hands over where its happy path starts) and `verifying-plugin-changes` for
 code that looks stale, whose one `--plugin-dir` sentence S6 amends.
 
-## Open questions
+## Decisions
 
-Each proceeds on its default unless my human partner says otherwise.
+My human partner settled each question on 2026-10-26.
 
-1. **Skill name.** Default `plugin-creation`, matching this plan's directory
-   and the gerund-noun names beside it. Alternative: `starting-a-plugin-repo`,
-   which names the moment more literally.
-2. **Probe name and form.** Default `bin/plugin-craft-route`, bash, one file,
-   tab-separated lines. Alternative: JSON output, which the body would parse
-   with `jq` for no gain over a line it reads.
-3. **create-plugin whole or split around the toolkit.** Default: the decided
-   order literally — create-plugin runs through its Phase 6, its Phase 7
-   moves after step 9. Alternative: its Phases 1–4, commit, the toolkit, then
-   Phases 5–8 under dogfood, which loads every component edit through the
-   copy but reorders the decision.
-4. **`/gitlore:install` under auto mode.** Default: the agent invokes it as
-   gitlore prescribes; if the classifier denies the sandbox-disabled call, the
-   body relays the printed command as a shell act. The S7 walk settles it.
-5. **https memory url with a `dist.include`.** Default: the probe requires
-   https regardless — cheap, and what this repo just did. Settled by a keyless
-   install of a dist-ref plugin, with a stub `ssh` that exits 255 first on
-   PATH.
-6. **`check-refs` in `precommit`: `missing` or `warn`.** Default `missing`:
-   0.12.0's migration note says to wire it, and the route's goal is the full
-   shape.
-7. **Probing `MARKETPLACE_DIR` and `excludedCommands`.** Default no, per D-10:
-   the release preflight's refusal names each fix. Alternative: a `warn` line,
-   which saves one failed release call.
-8. **The `verifying-plugin-changes` sentence.** Default: amend it (S6).
-   Alternative: leave it, and let the new description carry the routing.
+1. **Skill name:** `plugin-creation`, matching this plan's directory and the
+   gerund-noun names beside it.
+2. **Probe name and form:** `bin/plugin-craft-creation-status`, bash, one
+   file, tab-separated lines. "Status" names what it prints; the
+   `plugin-craft-` prefix is there because every enabled plugin's `bin/`
+   shares PATH. JSON output was rejected: the body would parse it with `jq`
+   for no gain over a line it reads.
+3. **create-plugin runs whole, in the decided order:** through its Phase 6,
+   with its Phase 7 moved after step 9. Splitting it around the toolkit was
+   rejected because it reorders the decision.
+4. **`/gitlore:install` under auto mode:** the agent invokes it as gitlore
+   prescribes; if the classifier denies the sandbox-disabled call, the body
+   relays the printed command as a shell act. The S7 walk confirms it.
+5. **https memory url:** the probe requires https whether or not a
+   `dist.include` is set — cheap, and what this repo just did.
+6. **`check-refs` in `precommit`:** reported `missing`, since 0.12.0's
+   migration note says to wire it and the route's goal is the full shape.
+7. **No probe of `MARKETPLACE_DIR` or `excludedCommands`**, per D-10: the
+   release preflight's refusal names each fix.
+8. **The `verifying-plugin-changes` sentence is amended** (S6).
