@@ -1,20 +1,20 @@
 #!/usr/bin/env bats
-# The claude-version hook and its two helpers: scripts/running-version.sh
-# (last non-null transcript version), scripts/is-claude-version-call.sh
+# The claude-version hook and its two helpers: hooks/running-version.sh
+# (last non-null transcript version), hooks/is-claude-version-call.sh
 # (command matcher) and hooks/claude-version.sh (PostToolUse annotation).
 # shellcheck disable=SC2016 # fixtures hold literal $ and quotes
 
 setup() {
     root="$BATS_TEST_DIRNAME/.."
-    extractor="$root/scripts/running-version.sh"
-    matcher="$root/scripts/is-claude-version-call.sh"
+    extractor="$root/hooks/running-version.sh"
+    matcher="$root/hooks/is-claude-version-call.sh"
     hook="$root/hooks/claude-version.sh"
     work="$BATS_TEST_TMPDIR/dir with space"
     mkdir -p "$work/bin"
     transcript="$work/session one.jsonl"
 }
 
-# ---- scripts/running-version.sh -------------------------------------------
+# ---- hooks/running-version.sh -------------------------------------------
 
 # tline <type> [version]: one transcript line; no version arg means null
 tline() {
@@ -87,7 +87,7 @@ extract() {
     [ -z "$output" ]
 }
 
-# ---- scripts/is-claude-version-call.sh ------------------------------------
+# ---- hooks/is-claude-version-call.sh ------------------------------------
 
 # Exit 0 iff a simple command is `claude` with --version or -v.
 matches() {
@@ -124,6 +124,12 @@ no_match() {
     matches 'true; claude --version'
 }
 
+@test "matcher accepts claude -v after ||" {
+    matches 'false || claude -v'
+}
+
+# Residual bound: wrappers (`env X=1 claude -v`, `command claude -v`) and a
+# path-qualified binary (`~/.local/bin/claude --version`) are not matched.
 @test "matcher accepts claude --version after a leading env assignment" {
     matches 'FOO=1 claude --version'
 }
@@ -136,6 +142,14 @@ no_match() {
 
 @test "matcher refuses claude --version quoted inside echo" {
     no_match 'echo "claude --version"'
+}
+
+@test "matcher refuses claude --version mid-string inside echo" {
+    no_match 'echo "run claude --version now"'
+}
+
+@test "matcher refuses unquoted echo claude --version" {
+    no_match 'echo claude --version'
 }
 
 @test "matcher refuses claude -v inside a git commit message" {
@@ -179,7 +193,6 @@ run_hook() {
 }
 
 @test "hook on mismatch names both versions in additionalContext" {
-    stub_claude 2.1.300
     tline user 2.1.281 > "$transcript"
     run_hook "$(payload 'claude --version' '2.1.300 (Claude Code)' "$transcript")"
     [ "$status" -eq 0 ]
@@ -190,7 +203,6 @@ run_hook() {
 }
 
 @test "hook on mismatch also fires for a subagent payload" {
-    stub_claude 2.1.300
     tline user 2.1.281 > "$transcript"
     p="$(payload 'claude -v' '2.1.300 (Claude Code)' "$transcript" \
         | jq '. + {agent_id:"agent-abc"}')"
@@ -201,7 +213,6 @@ run_hook() {
 }
 
 @test "hook is silent with exit 0 when installed equals running" {
-    stub_claude 2.1.281
     tline user 2.1.281 > "$transcript"
     run_hook "$(payload 'claude --version' '2.1.281 (Claude Code)' "$transcript")"
     [ "$status" -eq 0 ]
@@ -209,23 +220,68 @@ run_hook() {
 }
 
 @test "hook is silent with exit 0 for a command that is not claude --version" {
-    # Mismatching versions on disk, so only the matcher can keep it silent.
+    tline user 2.1.281 > "$transcript"
+    # The stdout carries a mismatching version, so only the matcher can keep
+    # the hook silent.
+    run_hook "$(payload 'grep -h "claude --version" notes.md' \
+        'claude --version said 2.1.300 (Claude Code)' "$transcript")"
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}
+
+@test "hook takes the installed version from tool_response.stdout, not a re-run" {
+    stub_claude 2.1.281
+    tline user 2.1.281 > "$transcript"
+    run_hook "$(payload 'claude --version' '2.1.300 (Claude Code)' "$transcript")"
+    [ "$status" -eq 0 ]
+    ctx="$(jq -r '.hookSpecificOutput.additionalContext' <<< "$output")"
+    [[ "$ctx" == *"2.1.300"* ]]
+}
+
+@test "hook stays silent when stdout matches the running version despite a differing stub" {
     stub_claude 2.1.300
     tline user 2.1.281 > "$transcript"
-    run_hook "$(payload 'echo "claude --version"' 'claude --version' "$transcript")"
+    run_hook "$(payload 'claude --version' '2.1.281 (Claude Code)' "$transcript")"
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}
+
+@test "hook reports a mismatch when stdout has other lines before the version" {
+    tline user 2.1.281 > "$transcript"
+    run_hook "$(payload 'echo start; claude --version' \
+        $'start\n2.1.300 (Claude Code)' "$transcript")"
+    [ "$status" -eq 0 ]
+    ctx="$(jq -r '.hookSpecificOutput.additionalContext' <<< "$output")"
+    [[ "$ctx" == *"2.1.300"* ]]
+    [[ "$ctx" == *"2.1.281"* ]]
+}
+
+@test "hook is silent with exit 0 on empty stdin" {
+    run_hook ""
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}
+
+@test "hook is silent with exit 0 on malformed JSON stdin" {
+    run_hook '{"tool_input": not json'
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}
+
+@test "hook is silent with exit 0 when transcript_path names a nonexistent file" {
+    run_hook "$(payload 'claude --version' '2.1.300 (Claude Code)' \
+        "$work/no such transcript.jsonl")"
     [ "$status" -eq 0 ]
     [ -z "$output" ]
 }
 
 @test "hook is silent with exit 0 when transcript_path is missing" {
-    stub_claude 2.1.300
     run_hook "$(payload 'claude --version' '2.1.300 (Claude Code)')"
     [ "$status" -eq 0 ]
     [ -z "$output" ]
 }
 
 @test "hook is silent with exit 0 when the transcript has no version" {
-    stub_claude 2.1.300
     tline mode > "$transcript"
     run_hook "$(payload 'claude --version' '2.1.300 (Claude Code)' "$transcript")"
     [ "$status" -eq 0 ]
