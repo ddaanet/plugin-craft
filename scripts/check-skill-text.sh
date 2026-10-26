@@ -14,14 +14,20 @@
 # path or a fact filename dangles for a consumer wherever it sits, so those
 # checks read every line as written.
 #
-# The code-skipping is a line scanner, not a Markdown parser. Residual bounds:
-# - a code span that opens on one line and closes on a later one is not
-#   recognised, so a wikilink inside it is refused;
+# The code-skipping is a line scanner, not a Markdown parser. Code spans are
+# paired across the lines of a paragraph (it ends at a blank line, a fence
+# opener or end of file), since the repo hard-wraps prose and a span may cross
+# a line break. Residual bounds:
+# - the scanner cannot see block boundaries that are not blank lines, such as
+#   consecutive list items or a heading directly above text. In
+#   "- foo `bar" / "- [[fact]] `qux`" the lone backtick ending the first item
+#   pairs with the first backtick of the second, masking the wikilink;
 # - an indented (four-space) code block is not recognised, only fences;
 # - a fence may be indented by any amount, not only up to three spaces, so a
 #   fence nested in a list item counts, and a fence-looking line in an
 #   indented code block is taken for a fence;
-# - an unclosed fence runs to the end of the file, as in CommonMark.
+# - an unclosed fence runs to the end of the file, as in CommonMark; one inside
+#   a list item stays open past the end of the item, where CommonMark closes it.
 set -uo pipefail
 
 root="${1:-skills}"
@@ -47,16 +53,37 @@ pattern="$pattern|(^|[^A-Za-z0-9_/-])($slugs)\.md"       # bare fact filename
 # shellcheck disable=SC2016 # awk source, not shell: nothing should expand
 awk_prog='
 {
-    hit = 0
     if (fence != "") {
         if (closes($0)) fence = ""
-    } else if (!opens($0)) {
-        if (mask($0) ~ /\[\[[^]]+\]\]/) hit = 1
+        report($0, NR, 0)
+    } else if (opens($0)) {
+        flush()
+        report($0, NR, 0)
+    } else if ($0 ~ /^[ \t\r]*$/) {
+        flush()
+        report($0, NR, 0)
+    } else {
+        nbuf++; buf[nbuf] = $0; num[nbuf] = NR
     }
-    if ($0 ~ ENVIRON["CST_PATTERN"]) hit = 1
-    if (hit) { print FILENAME ":" NR ":" $0; found = 1 }
 }
-END { exit found ? 1 : 0 }
+END { flush(); exit found ? 1 : 0 }
+
+# Prints a line that hits the wikilink flag or the always-checked pattern.
+function report(text, n, wiki) {
+    if (wiki || text ~ ENVIRON["CST_PATTERN"]) { print FILENAME ":" n ":" text; found = 1 }
+}
+
+# Masks the buffered paragraph as one string, so a code span may cross a line
+# break, then reports each original line with its own number.
+function flush(   joined, parts, i) {
+    if (nbuf == 0) return
+    joined = buf[1]
+    for (i = 2; i <= nbuf; i++) joined = joined "\n" buf[i]
+    split(mask(joined), parts, "\n")
+    for (i = 1; i <= nbuf; i++)
+        report(buf[i], num[i], parts[i] ~ /\[\[[^]]+\]\]/)
+    nbuf = 0
+}
 
 # Sets fch, frun and frest when the line starts (after blanks) with a run of
 # three or more backticks or tildes; returns the fence character, else "".
@@ -87,14 +114,17 @@ function closes(line) {
     return fence_of(line) == fence && frun >= flen && frest ~ /^[ \t\r]*$/
 }
 
-# The line with each code span replaced by one space. A span is a backtick run
-# closed by the next run of exactly the same length; a run with no closer is
-# literal text, and a backslash-escaped backtick is not a run.
-function mask(s,   out, i, j, k, m, n, len, c, found) {
+# The text with each code span replaced by one space plus the newlines it held,
+# so the lines still split back one to one. A span is a backtick run closed by
+# the next run of exactly the same length; a run with no closer is literal
+# text. A backslash escapes a following backtick or backslash, so an escaped
+# backtick is not a run.
+function mask(s,   out, i, j, k, m, n, len, c, d, t, found) {
     out = ""; i = 1; len = length(s)
     while (i <= len) {
         c = substr(s, i, 1)
-        if (c == "\\" && substr(s, i + 1, 1) == "`") { out = out c "`"; i += 2; continue }
+        d = substr(s, i + 1, 1)
+        if (c == "\\" && (d == "`" || d == "\\")) { out = out c d; i += 2; continue }
         if (c != "`") { out = out c; i++; continue }
         j = i
         while (j <= len && substr(s, j, 1) == "`") j++
@@ -107,7 +137,11 @@ function mask(s,   out, i, j, k, m, n, len, c, found) {
             if (m - k == n) { found = 1; break }
             k = m
         }
-        if (found) { out = out " "; i = m }
+        if (found) {
+            t = substr(s, i, m - i)
+            gsub(/[^\n]+/, "", t)
+            out = out " " t; i = m
+        }
         else { out = out substr(s, i, n); i = j }
     }
     return out

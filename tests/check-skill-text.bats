@@ -52,6 +52,73 @@ check() {
     [ "$status" -eq 1 ]
 }
 
+@test "a code span crossing a line break does not mask prose on its closing line" {
+    write_skill 'Use `foo' 'bar` then [[some-fact]] and `baz`.'
+    check
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"$f:2:bar\` then [[some-fact]] and \`baz\`."* ]]
+}
+
+@test "a hard-wrapped span pair does not mask a wikilink between spans" {
+    write_skill \
+        'instruction** — `You should create...`, `You need to configure...`, `You can' \
+        'use...`. Reflexive intensifiers, per [[some-fact]], (`do not verify it yourself`), possessives'
+    check
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"$f:2:use...\`. Reflexive intensifiers, per [[some-fact]]"* ]]
+}
+
+@test "double brackets inside a span that crosses a line break pass" {
+    write_skill 'test with `if [[ -n "$x" ]];' 'then :; fi` here'
+    check
+    [ "$status" -eq 0 ]
+}
+
+@test "a blank line ends a paragraph, so a stray backtick does not pair across it" {
+    write_skill 'a stray ` tick' '' 'see [[some-fact]] then ` another'
+    check
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"$f:3:"* ]]
+}
+
+@test "a wikilink after a paragraph that follows a fence keeps its line number" {
+    write_skill 'one' '```' '[[ x ]]' '```' 'two `a' 'b` three' '' 'see [[some-fact]]'
+    check
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"$f:8:see [[some-fact]]"* ]]
+}
+
+@test "an escaped backtick opens no span" {
+    write_skill 'literal \` and `[[ x ]]`'
+    check
+    [ "$status" -eq 0 ]
+}
+
+@test "an escaped backslash before a backtick leaves the backtick a span delimiter" {
+    write_skill '\\`a` [[some-fact]] `b`'
+    check
+    [ "$status" -eq 1 ]
+}
+
+@test "a triple backtick followed by an info string with a backtick opens no fence" {
+    write_skill '```js` is not a fence opener' 'see [[some-fact]]'
+    check
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"$f:2:see [[some-fact]]"* ]]
+}
+
+@test "an unreadable file is reported and exits 2" {
+    if [ "$(id -u)" -eq 0 ]; then
+        skip "root reads mode-000 files"
+    fi
+    write_skill 'plain prose'
+    chmod 000 "$f"
+    check
+    chmod 644 "$f"
+    [ "$status" -eq 2 ]
+    [[ "$output" == *"could not scan: $f"* ]]
+}
+
 @test "a wikilink inside a backtick fence passes" {
     write_skill 'text' '```bash' 'if [[ -n "$x" ]]; then :; fi' '```' 'more'
     check
