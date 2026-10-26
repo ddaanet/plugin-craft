@@ -10,6 +10,7 @@ _default:
 precommit: check-refs
     jq . .claude-plugin/plugin.json > /dev/null
     bash -n scripts/*.sh
+    shellcheck -x bin/plugin-craft-creation-status lib/creation-status-readers.sh
     bash scripts/check-skill-text.sh
     plugin-dev/run-bats.sh tests/*.bats
 
