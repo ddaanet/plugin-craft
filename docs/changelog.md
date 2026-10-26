@@ -2,6 +2,10 @@
 
 Design-significant changes only: decisions reversed, subsystems built or torn down, requirements added or dropped, a rationale that turned out false. Git history is the full record.
 
+## 2026-10-26 — `verifying-plugin-changes` names the classifier's no-verdict failure
+
+A file write under a `--plugin-dir` checkout can end in `auto mode classifier gave no verdict ... hard failure`, and the retry fails the same way. The brief offered a skill section or a `PermissionDenied` hook; the section won because whether a hook's `additionalContext` reaches the model is unverified and the hook would pin to a message the bundle builds from per-reason templates. FR-5 now has a second trigger, the error string, in the description, and the body gained a short section: the hard family only, the cause, and a `python3`-script route that is itself classified. The hook stays open pending a live probe of that channel. A heredoc is not named as a route because it was never tested.
+
 ## 2026-10-26 — a fifth skill, `plugin-creation`, and the probe behind it
 
 A session setting up a plugin repository hand-rolled a `--plugin-dir` launch, a `PATH_add` to a sibling checkout and a deferred marketplace listing, because nothing routed "how do I load a plugin under development" to the toolkit. `plugin-creation` takes a repository through gitlore, `/plugin-dev:create-plugin` and the vendored toolkit in the order the brief decided, and routes away from the bare flag to the dogfood launcher. A fifth description is a cost taken deliberately, per D-1 and N-1: roughly 130 tokens in every session where the plugin is enabled, bounded by a `Not for` clause. D-1 was amended in place for the count and the widened moment; its boundary is untouched.

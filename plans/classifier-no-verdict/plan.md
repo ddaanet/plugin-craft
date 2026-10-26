@@ -3,8 +3,8 @@
 2026-10-26. Input: `plans/classifier-no-verdict/brief.md`. Claims checked
 against the CC 2.1.310 binary (`~/.local/share/claude/versions/2.1.310`, read
 with `mmap` and `find`; nothing was executed against real files) and against
-the repo. Steps are contracts, not code. **Nothing is implemented; the form
-(hook, skill, both) is not chosen here** - see "Decisions pending".
+the repo. Steps are contracts, not code. The form is O1, a skill section
+(T2) - see "Decisions pending".
 
 ## Goal
 
@@ -125,8 +125,8 @@ pattern). This writes into the shared ddaanet tier; see D6.
 
 ## Decisions pending
 
-1. **Form.** O1 skill section, O2 new skill, O3 hook, or O4 both?
-   Default O1; revisit after P1.
+1. **Form.** Decided 2026-10-26: O1 now (T2). O3/O4 are revisited only if
+   P1 shows `additionalContext` is delivered.
 2. **Run the probes?** P1-P5 need a real classifier denial. Default: my human
    partner runs P1 and P3 in a shim session; the rest wait.
 3. **Hook gating.** If a hook: match the hard text only, or any no-verdict?
