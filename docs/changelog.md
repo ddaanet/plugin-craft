@@ -2,6 +2,14 @@
 
 Design-significant changes only: decisions reversed, subsystems built or torn down, requirements added or dropped, a rationale that turned out false. Git history is the full record.
 
+## Unreleased
+
+`hook-authoring`'s `references/output-channels.md` gained three measured facts, each from a brief sent by a session in another repository:
+
+- `PostToolBatch` exit codes (CC 2.1.296): exit 2 ends the turn with an empty reply, any other non-zero is invisible to the agent, and an `EXIT`-trap guard that reports on `systemMessage` and `additionalContext` and exits 0 is the remedy for a batch hook; `PreToolUse` stays fail-closed.
+- Failure after a decided deny: under `set -e` any later failing command turns the deny into a silent allow, so the rule inverts at the decision point and later failures are absorbed.
+- An `updatedInput` rewrite that prefixes the command stops matching a user's `Bash(cmd:*)` allow rule (CC 2.1.29x, 2026-10-15), with the two ways out and three probe pitfalls.
+
 ## 2026-09-17 — the toolkit closed the first-release gap, and the section went with it
 
 Toolkit 0.8.0 landed the fix for the gap the first release surfaced: detection is by tag alone, the version-guard hook's message branches on that predicate and names the maintainer's edit rather than a recipe that cannot select a version, and the shipped README documents setting the version and committing it. D-5's reopen-if fired as written, so `toolkit-release`'s first-release section was deleted rather than updated — what it carried is now in a file every consumer of the toolkit already has.
