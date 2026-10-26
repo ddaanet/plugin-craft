@@ -58,7 +58,9 @@ recovery — the form the action should take instead — goes on
 
 The recovery does not belong on the deny reason. Putting it there means the
 instructional prose renders beside every block: noise for the human, and no
-better targeted for the agent, which reads both channels either way.
+better targeted for the agent, which reads both channels either way. What goes
+on `additionalContext` or a deny reason carries no conditional the hook could
+have evaluated itself; see `plugin-craft:skill-authoring` for the rule.
 
 The stamp is a version rather than a date on purpose, and the probe is worth
 re-running before relying on this: the failure mode is silent — a future CC that stopped delivering

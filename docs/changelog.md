@@ -2,6 +2,10 @@
 
 Design-significant changes only: decisions reversed, subsystems built or torn down, requirements added or dropped, a rationale that turned out false. Git history is the full record.
 
+## 2026-10-26 — `skill-authoring` gained a reference node
+
+A new rule — text a plugin puts in front of an agent carries no conditional a script could have evaluated — landed in `skill-authoring`, and it took the hub past the ~200-line cap. The bundled-scripts section and its project-root subsection, about 93 lines and needed only when a skill must run a script, moved to `references/bundled-scripts.md`, verbatim apart from heading levels; the hub keeps a short summary routing by what a reader arrives holding. D-7 now records that `skill-authoring` is a hub plus one reference file, so it is no longer true that only `hook-authoring` has reference files. The rule is a design principle across skill prose, scripts and hooks rather than a hook rule, which is why it lives in `skill-authoring` with a one-line pointer from `hook-authoring`.
+
 ## 2026-09-17 — the toolkit closed the first-release gap, and the section went with it
 
 Toolkit 0.8.0 landed the fix for the gap the first release surfaced: detection is by tag alone, the version-guard hook's message branches on that predicate and names the maintainer's edit rather than a recipe that cannot select a version, and the shipped README documents setting the version and committing it. D-5's reopen-if fired as written, so `toolkit-release`'s first-release section was deleted rather than updated — what it carried is now in a file every consumer of the toolkit already has.

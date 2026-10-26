@@ -86,7 +86,7 @@ report a mid-session plugin edit as "now active" without one.
 
 Exception: bundled *scripts* invoked by a bare-name `bin/` shim take effect
 immediately — PATH is set at session start but points at the live directory
-(see `plugin-craft:skill-authoring`).
+(see `plugin-craft:skill-authoring`, `references/bundled-scripts.md`).
 
 ## Hook event registration is frozen; script bodies are not
 
