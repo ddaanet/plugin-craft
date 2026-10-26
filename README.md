@@ -1,10 +1,10 @@
 # plugin-craft
 
-Building on the Claude Code harness: authoring and debugging hooks, writing
-skills, and verifying that the plugin code actually running is the code you
+Building on the Claude Code harness: setting up a plugin repository, authoring
+and debugging hooks, writing skills, and verifying that the plugin code actually running is the code you
 just edited.
 
-Four skills, each firing on a moment you are already in rather than on a topic
+Five skills, each firing on a moment you are already in rather than on a topic
 word you have to think to type. They were cut from a shared memory tier because
 recall delivers only the first 4KB of a fact and stops — most of each body was
 unreachable by the mechanism meant to reach it. A skill body is reachable in
@@ -49,6 +49,13 @@ cannot choose its own version through the recipe, and the post-pull check that
 catches a silently broken justfile. The
 happy path stays in the toolkit's own `plugin-dev/README.md`, which every
 consumer already has.
+
+**`plugin-creation`** — taking a new or freshly extracted repository to a
+working plugin in the decided order: gitlore memory, then
+`/plugin-dev:create-plugin`, then the vendored `claude-plugin-dev` toolkit and
+its dogfood launcher. A read-only script, `plugin-craft-creation-status`, reports
+the first missing step and who acts on it; the skill body keeps the judgement
+and routes away from a hand-rolled `--plugin-dir` launch to the dogfood route.
 
 ## Development
 

@@ -2,6 +2,12 @@
 
 Design-significant changes only: decisions reversed, subsystems built or torn down, requirements added or dropped, a rationale that turned out false. Git history is the full record.
 
+## 2026-10-26 — a fifth skill, `plugin-creation`, and the probe behind it
+
+A session setting up a plugin repository hand-rolled a `--plugin-dir` launch, a `PATH_add` to a sibling checkout and a deferred marketplace listing, because nothing routed "how do I load a plugin under development" to the toolkit. `plugin-creation` takes a repository through gitlore, `/plugin-dev:create-plugin` and the vendored toolkit in the order the brief decided, and routes away from the bare flag to the dogfood launcher. A fifth description is a cost taken deliberately, per D-1 and N-1: roughly 130 tokens in every session where the plugin is enabled, bounded by a `Not for` clause. D-1 was amended in place for the count and the widened moment; its boundary is untouched.
+
+D-10 records the split: `bin/plugin-craft-creation-status` detects where a repository stands and the skill body keeps only judgement. The probe is the plugin's first executable, so the architecture no longer reads "no commands, no agents and no hooks" without the `bin/` clause. It ships as an entry script plus a sourced `lib/` of file-format readers to stay under the 400-line cap, which is why `dist.include` gained `bin` and `lib`. For the probe, a gitlore setup counts as committed when HEAD holds it, so later edits to `.envrc` and `.gitmodules` do not send the route back.
+
 ## 2026-10-26 — `skill-authoring` gained a reference node
 
 A new rule — text a plugin puts in front of an agent carries no conditional a script could have evaluated — landed in `skill-authoring`, and it took the hub past the ~200-line cap. The bundled-scripts section and its project-root subsection, about 93 lines and needed only when a skill must run a script, moved to `references/bundled-scripts.md`, verbatim apart from heading levels; the hub keeps a short summary routing by what a reader arrives holding. D-7 now records that `skill-authoring` is a hub plus one reference file, so it is no longer true that only `hook-authoring` has reference files. The rule is a design principle across skill prose, scripts and hooks rather than a hook rule, which is why it lives in `skill-authoring` with a one-line pointer from `hook-authoring`.
