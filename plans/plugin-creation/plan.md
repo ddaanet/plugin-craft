@@ -385,6 +385,8 @@ My human partner settled each question on 2026-10-26.
    `plugin-craft-` prefix is there because every enabled plugin's `bin/`
    shares PATH. JSON output was rejected: the body would parse it with `jq`
    for no gain over a line it reads.
+   The probe ships as the entry script plus a sourced lib (approved
+   2026-10-26, to keep both under the 400-line cap).
 3. **create-plugin runs whole, in the decided order:** through its Phase 6,
    with its Phase 7 moved after step 9. Splitting it around the toolkit was
    rejected because it reorders the decision.
@@ -398,3 +400,7 @@ My human partner settled each question on 2026-10-26.
 7. **No probe of `MARKETPLACE_DIR` or `excludedCommands`**, per D-10: the
    release preflight's refusal names each fix.
 8. **The `verifying-plugin-changes` sentence is amended** (S6).
+9. **gitlore "committed" means HEAD contains the gitlore setup**, not that its
+   files are unmodified, so step 6's edit to `.envrc` (and step 10's to
+   `.gitmodules`) does not reopen the `gitlore` check. The toolkit has no
+   committed-ness check: step 4's commit is not probed.
