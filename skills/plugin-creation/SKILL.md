@@ -32,7 +32,8 @@ actor, then run the probe again. Stop when it says `next none`.
   excluded because the sandbox masks dotfiles in the project root, which a
   sandboxed sync would copy or delete (`plugin-dev/manual/dogfood.md`).
 - **decision** — ask my human partner inline, with a stated default so the
-  thread proceeds without a round-trip.
+  thread proceeds without a round-trip. A declined decision ends the route
+  there: the probe keeps naming it as `next`, and that is not unfinished work.
 
 The probe computes every check independently: an extracted repository with a
 manifest but no gitlore shows both facts, and `next` names only the first
@@ -63,7 +64,9 @@ where the step text says otherwise.
   repository first), and skip its Phase 7 `--plugin-dir` test, which the
   dogfood step replaces. For extracted code only its Phase 4 (manifest, README)
   applies; its discovery and component phases are for code that does not exist
-  yet.
+  yet. If the command is not available, `plugin-dev` from
+  `claude-plugins-official` is not enabled: enabling it through `/plugin`,
+  then `/reload-plugins`, is a shell act.
 - **`toolkit`** — a shell act: the install block, or `bash plugin-dev/install.sh`
   when vendored but unwired. Then commit `plugin-dev`, `justfile` and
   `.claude/settings.json`. The probe does not check that commit.
