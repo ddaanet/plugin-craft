@@ -1,12 +1,6 @@
-## Open decisions
-
-- Release plugin-craft 0.1.5. Held by my human partner (2026-10-26); waits for them to name it. `main` is at v0.1.4, so the unreleased range is `main..dev`. It had per-commit review, and its release review ran on 2026-10-27 (a Claude `/code-review` at xhigh and a Codex adversarial review); the fixes landed with one Opus review, no high or medium findings. The range holds: the `plugin-creation` skill and its S7 fixes, the `claude --version` hook (matcher now a single awk pass, tested under mawk only), the classifier no-verdict section in `verifying-plugin-changes`, and the containment reference `hook-authoring/references/plugin-agent-containment.md`, whose two ddaanet memory facts are already retired so no installed plugin-craft carries their replacement until this ships.
-- Whether `hook-authoring` should carry the P1 finding: a `PermissionDenied` hook fires on an auto-mode denial, but its `additionalContext` is dropped and its `reason` reads `Classifier unavailable`, not the model-visible text (CC 2.1.311, `plans/classifier-no-verdict/probes.md`). Default: yes, one line in its output-channels node.
-
 ## Remaining
 
-- `plans/classifier-no-verdict/plan.md` T4: after 0.1.5 ships, retire `memory/ddaanet/classifier-no-verdict-plugin-dir.md` and both index lines, repointing inbound references at `verifying-plugin-changes`; it is a write to the shared ddaanet tier, confirmed by my human partner first.
-- `plans/classifier-no-verdict/plan.md` probes P4 (Edit, NotebookEdit) and P5 (heredoc) not run; none blocks anything shipped. P3's comparison was made as P6 in `probes.md`.
-- Delete or commit the untracked `plans/classifier-no-verdict/t2-report.md` and `t2-review.md`; the three merged worktrees under `.claude/worktrees/` are still in place.
-- `check_python` in `bin/plugin-craft-creation-status` parses `dist.include` by hand rather than using the vendored `plugin-dev/dist.sh paths <root>`. The rules differ: it drops a legal `foo..bar`, does not reject blanks or globs as `dist.sh` does, and reads the working tree rather than HEAD. Declined for 0.1.5: reusing `dist.sh` would add a dependency on the vendored toolkit.
+- Run `plans/classifier-no-verdict/plan.md` probes P4 (Edit, NotebookEdit) and P5 (heredoc); none blocks anything shipped.
+- Remove the merged worktree `.claude/worktrees/agent-a17e8ddeadf33691c` and its branch once the session process holding its lock has exited.
 - Run the `claude --version` matcher tests under gawk and macOS awk; only mawk has run them.
+- `check_python` in `bin/plugin-craft-creation-status` parses `dist.include` by hand rather than via the vendored `plugin-dev/dist.sh paths <root>`: it drops a legal `foo..bar`, accepts blanks and globs, and reads the working tree rather than HEAD. Declined for 0.1.5 to avoid depending on the vendored toolkit; revisit if it bites.

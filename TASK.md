@@ -1,3 +1,0 @@
-## Current task
-
-The 0.1.5 release review of `main..dev` is done: a Claude `/code-review` at xhigh and a Codex adversarial review ran, their real findings were fixed and the fix round had its one Opus review (no high or medium). Probe P6 confirmed the dogfood load avoids the classifier no-verdict. The release itself waits for my human partner to name it. Next action: put the P1 finding in `hook-authoring`'s output-channels node (its open decision defaults to yes), then raise the pending memory-commit approval with my human partner.
