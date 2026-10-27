@@ -9,7 +9,7 @@ _default:
 # Checks that run before every commit.
 precommit: check-refs
     jq . .claude-plugin/plugin.json > /dev/null
-    bash -n scripts/*.sh hooks/*.sh
+    for f in scripts/*.sh hooks/*.sh lib/*.sh bin/plugin-craft-creation-status; do bash -n "$f" || exit 1; done
     shellcheck scripts/*.sh hooks/*.sh
     shellcheck -x bin/plugin-craft-creation-status lib/creation-status-readers.sh
     jq . hooks/hooks.json > /dev/null

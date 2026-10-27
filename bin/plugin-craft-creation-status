@@ -206,7 +206,7 @@ check_toolkit() {
         emit missing toolkit "plugin-dev/ is not vendored" shell "$(toolkit_install_block)"
         return
     fi
-    grep -qsF "import 'plugin-dev/release.just'" "$ROOT/justfile" \
+    grep -qsxF "import 'plugin-dev/release.just'" "$ROOT/justfile" \
         || problems+=("justfile lacks the plugin-dev import")
     if [ ! -s "$s" ] || [ ! -f "$s" ]; then
         problems+=(".claude/settings.json is absent or a sandbox mask")
@@ -292,7 +292,14 @@ check_memory_url() {
         emit skip memory-url "no gitlore-memory entry"
         return
     fi
-    url=$(g config --file "$ROOT/.gitmodules" --get submodule.gitlore-memory.url) || url=""
+    # HEAD, as the gitlore check reads it: a url fixed only in the working
+    # tree is not yet committed.
+    if ! in_head .gitmodules; then
+        emit missing memory-url ".gitmodules is not committed" agent \
+            "commit .gitmodules with the gitlore-memory url"
+        return
+    fi
+    url=$(g config --blob HEAD:.gitmodules --get submodule.gitlore-memory.url) || url=""
     if [[ $url == https://* ]]; then
         emit ok memory-url "gitlore-memory url is https"
     elif [[ $url == */gitlore-placeholder ]]; then

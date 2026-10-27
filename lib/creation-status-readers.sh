@@ -60,13 +60,17 @@ manifest_valid() { # stdin: a manifest
            and (.version | type == "string" and length > 0)' >/dev/null 2>&1
 }
 
-settings_wired() { # $1: settings file; the three commands, spelled as install.sh spells them
+settings_wired() { # $1: settings file; each command under its event, as install.sh wires it
+    # The matcher is not checked: install.sh counts a command present whatever
+    # its matcher, since the consumer may have rescoped it.
     # shellcheck disable=SC2016 # ${CLAUDE_PROJECT_DIR} stays literal on purpose
     jq -e --arg a 'bash "${CLAUDE_PROJECT_DIR}/plugin-dev/version-guard.sh"' \
         --arg b 'bash "${CLAUDE_PROJECT_DIR}/plugin-dev/dogfood.sh" pre-tool' \
         --arg c 'bash "${CLAUDE_PROJECT_DIR}/plugin-dev/dogfood.sh" session-start' \
-        '[.hooks[]?[]? | .hooks[]? | .command // empty] as $cmds
-         | all([$a, $b, $c][]; . as $w | any($cmds[]; . == $w))' "$1" >/dev/null 2>&1
+        'def wired($event; $cmd):
+             any(.hooks[$event][]?; any(.hooks[]?; .type == "command" and .command == $cmd));
+         wired("PreToolUse"; $a) and wired("PreToolUse"; $b) and wired("SessionStart"; $c)' \
+        "$1" >/dev/null 2>&1
 }
 
 # shellcheck disable=SC2016 # the command text is printed, not expanded here
@@ -81,9 +85,15 @@ toolkit_install_block() { # the plugin-dev/README.md block as one pasteable line
 }
 
 ssh_to_https() { # an scp-like or ssh:// url on stdout as https://host/path; 1 when it is neither
-    local re='^(ssh://)?[^@/]+@([^:/]+)(:[0-9]+)?[:/](.+)$'
-    [[ $1 =~ $re ]] || return 1
-    printf 'https://%s/%s' "${BASH_REMATCH[2]}" "${BASH_REMATCH[4]}"
+    local ssh_re='^ssh://[^@/]+@([^:/]+)(:[0-9]+)?[:/](.+)$'
+    local scp_re='^[^@/]+@([^:/]+)[:/](.+)$'
+    if [[ $1 =~ $ssh_re ]]; then
+        printf 'https://%s/%s' "${BASH_REMATCH[1]}" "${BASH_REMATCH[3]}"
+    elif [[ $1 =~ $scp_re ]]; then
+        printf 'https://%s/%s' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]}"
+    else
+        return 1
+    fi
 }
 
 first_python() { # prints the first python file under the root-relative entry $1

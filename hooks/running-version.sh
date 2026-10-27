@@ -7,8 +7,6 @@
 # carry no version, so the last line is not enough; the window below is a
 # bound, and a tail with no versioned line inside it reads as "none".
 
-WINDOW=400
-
 main() {
     local file="${1-}" version
     [ -n "$file" ] && [ -r "$file" ] || return 1
@@ -21,5 +19,7 @@ main() {
     [ -n "$version" ] || return 1
     printf '%s\n' "$version"
 }
+
+WINDOW=400
 
 main "$@"

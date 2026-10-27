@@ -1,0 +1,10 @@
+# Doc fixes report
+
+1. TODO.md:3 — range corrected to `main..dev`; records the 2026-10-27 release review (Claude `/code-review` xhigh, Codex adversarial) with fixes in progress. No commit ids.
+2. TODO.md:11 — new item on `check_python` parsing `dist.include` by hand versus `plugin-dev/dist.sh paths`, differences listed, declined for 0.1.5.
+3. docs/design.md:53 — check-skill-text described as now behaving: only the wikilink check skips code spans (may cross a line break within a paragraph) and fences; memory-path and filename checks read every line; the header's residual bounds summarised in one sentence.
+4. docs/design.md D-11 (~line 77) — awk tokenizer linear in command length, unquoted `#` at word start as comment, backslash-newline removal, 5-second timeout in `hooks/hooks.json`. L-3 (~line 113) — existing bounds untouched; one sentence added saying comment and continuation handling is part of the matcher, not a residual bound. The code is being rewritten by the other agent; I did not check the doc against it.
+5. README.md — blank line above `## The hook`; paragraphs at lines 3-5, 7-11 and the plugin-creation paragraph reflowed to 80 columns (only the markdown URL line stays longer). toolkit-release synopsis: removed "sandbox failure that leaves a release half-landed rather than failed" (the skill now says a sandboxed release refuses in preflight) in favour of "why `just release` must run unsandboxed", removed the first-release-version clause (section deleted 2026-09-17), added the push-route rewrite no preflight catches (in the skill, absent from the README). Classifier, `uncommitted changes` and post-pull justfile check kept: the skill still covers them. The skill's own description still says "leave a release half-landed"; left alone as out of scope (skills/ is not to be touched).
+6. docs/changelog.md:14 — blank line added above the 2026-10-26 first-hook heading.
+
+No changelog entry added. Line counts: TODO.md 11, design.md 125, README.md 82, changelog.md 53. `just check-refs` passed (0 references in 16 files, 21 exempt skipped); `bash scripts/check-skill-text.sh` passed (9 files).

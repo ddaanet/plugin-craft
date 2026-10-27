@@ -172,6 +172,34 @@ no_match() {
     no_match ''
 }
 
+@test "matcher refuses claude --version after a comment word" {
+    no_match 'cat versions.log # example; claude --version'
+}
+
+@test "matcher reads a # inside a word as literal" {
+    matches 'echo a#b; claude -v'
+}
+
+@test "matcher ends a comment at the newline" {
+    matches $'# note\nclaude -v'
+}
+
+@test "matcher joins a backslash-newline continuation" {
+    matches $'claude \\\n--version'
+}
+
+@test "matcher keeps a backslash literal before an ordinary char in double quotes" {
+    no_match 'claude "\-v"'
+}
+
+@test "matcher lets a backslash escape the double quote inside double quotes" {
+    no_match 'echo "a\" ; claude -v"'
+}
+
+@test "matcher gives a backslash no escape power inside single quotes" {
+    matches "echo 'a\\'; claude -v"
+}
+
 # ---- hooks/claude-version.sh ----------------------------------------------
 
 # stub_claude <version>: a `claude` first on PATH printing that version
@@ -221,12 +249,37 @@ run_hook() {
 
 @test "hook is silent with exit 0 for a command that is not claude --version" {
     tline user 2.1.281 > "$transcript"
-    # The stdout carries a mismatching version, so only the matcher can keep
+    # The stdout is version-shaped at line start and differs from the running
+    # version, and the command mentions claude, so only the matcher can keep
     # the hook silent.
     run_hook "$(payload 'grep -h "claude --version" notes.md' \
-        'claude --version said 2.1.300 (Claude Code)' "$transcript")"
+        '2.1.300 (Claude Code)' "$transcript")"
     [ "$status" -eq 0 ]
     [ -z "$output" ]
+}
+
+@test "hook is silent when claude --version follows a comment word on the line" {
+    tline user 2.1.281 > "$transcript"
+    run_hook "$(payload 'cat versions.log # example; claude --version' \
+        '2.1.300 (Claude Code)' "$transcript")"
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}
+
+@test "hook is silent when a double-quoted backslash keeps -v from being a flag" {
+    tline user 2.1.281 > "$transcript"
+    run_hook "$(payload 'claude "\-v"' '2.1.300 (Claude Code)' "$transcript")"
+    [ "$status" -eq 0 ]
+    [ -z "$output" ]
+}
+
+@test "hook reports a mismatch for claude and --version split by a line continuation" {
+    tline user 2.1.281 > "$transcript"
+    run_hook "$(payload $'claude \\\n--version' '2.1.300 (Claude Code)' "$transcript")"
+    [ "$status" -eq 0 ]
+    ctx="$(jq -r '.hookSpecificOutput.additionalContext' <<< "$output")"
+    [[ "$ctx" == *"2.1.300"* ]]
+    [[ "$ctx" == *"2.1.281"* ]]
 }
 
 @test "hook takes the installed version from tool_response.stdout, not a re-run" {
@@ -288,22 +341,39 @@ run_hook() {
     [ -z "$output" ]
 }
 
-@test "hook finishes a 50 KB non-matching heredoc command within 5 seconds" {
-    # Cost must not grow quadratically with command length: the matcher runs
-    # on every Bash call, and heredocs of base64 text are routine.
-    tline user 2.1.281 > "$transcript"
+# big_command <last line>: a heredoc of base64 text of at least 50 KB, then
+# the given last line, in $work/command.txt
+big_command() {
     {
         printf "cat > out.b64 <<'EOF'\n"
         seq 1 12000 | base64
-        printf 'EOF\n'
+        printf 'EOF\n%s' "$1"
     } > "$work/command.txt"
     [ "$(wc -c < "$work/command.txt")" -ge 50000 ]
     jq -n --rawfile c "$work/command.txt" --arg t "$transcript" '
         {hook_event_name:"PostToolUse", tool_name:"Bash",
-         tool_input:{command:$c}, tool_response:{stdout:"done"},
+         tool_input:{command:$c}, tool_response:{stdout:"2.1.300 (Claude Code)"},
          transcript_path:$t}' > "$work/payload.json"
+}
+
+# Cost must not grow quadratically with command length: the matcher runs on
+# every Bash call, and heredocs of base64 text are routine. Both tests pass
+# the stdout and `*claude*` prefilters, so the matcher itself is timed.
+@test "hook finishes a 50 KB non-matching heredoc command within 5 seconds" {
+    tline user 2.1.281 > "$transcript"
+    big_command 'echo claude --version'
     run timeout 5 bash "$hook" < "$work/payload.json"
     [ "$status" -ne 124 ]
     [ "$status" -eq 0 ]
     [ -z "$output" ]
+}
+
+@test "hook finishes a 50 KB heredoc command ending in claude --version within 5 seconds" {
+    tline user 2.1.281 > "$transcript"
+    big_command 'claude --version'
+    run timeout 5 bash "$hook" < "$work/payload.json"
+    [ "$status" -ne 124 ]
+    [ "$status" -eq 0 ]
+    ctx="$(jq -r '.hookSpecificOutput.additionalContext' <<< "$output")"
+    [[ "$ctx" == *"2.1.300"* ]]
 }

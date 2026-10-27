@@ -6,7 +6,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/claude-version.sh\""
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/claude-version.sh\"",
+            "timeout": 5
           }
         ]
       }

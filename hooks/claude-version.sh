@@ -15,9 +15,10 @@ main() {
     command -v jq > /dev/null 2>&1 || return 0
 
     payload="$(cat)"
-    # Cheapest checks first: this runs on every Bash call, and the matcher is
-    # linear-per-character bash. A call that printed no Claude version, or
-    # whose command never mentions claude, never reaches it.
+    # Cheapest checks first: this runs on every Bash call. The matcher is one
+    # awk pass over the command, near-linear in its length, but it is still a
+    # process spawn: a call that printed no Claude version, or whose command
+    # never mentions claude, never reaches it.
     stdout="$(jq -r '.tool_response.stdout // empty' <<< "$payload" 2> /dev/null)" || return 0
     installed="$(installed_version "$stdout")" || return 0
 
