@@ -164,6 +164,12 @@ unchanged code by a failed assertion.
    another number; either is acceptable evidence for the annotation, only a
    real update is evidence for the incident. Record the CC version beside
    the observation.
+   **Done 2026-10-27, CC 2.1.311**, headless `claude -p --plugin-dir
+   dist/plugin` from a scratch directory. Equal versions: no context. A stub
+   printing `9.9.9 (Claude Code)` first on PATH: the agent received
+   `claude --version reports 9.9.9, the installed binary. This session is
+   running 2.1.311. Stamp observations about this session with 2.1.311.`
+   Stub evidence only; no real update was observed.
 
 Review: one reviewer (Sonnet floor, one rung above the implementer) for
 steps 2 to 5 together; step 1 is prose and needs none.
