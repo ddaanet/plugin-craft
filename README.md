@@ -1,14 +1,15 @@
 # plugin-craft
 
 Building on the Claude Code harness: setting up a plugin repository, authoring
-and debugging hooks, writing skills, and verifying that the plugin code actually running is the code you
-just edited.
+and debugging hooks, writing skills, and verifying that the plugin code
+actually running is the code you just edited.
 
-Five skills and one small hook (below), each firing on a moment you are
-already in rather than on a topic word you have to think to type. They were cut from a shared memory tier because
-recall delivers only the first 4KB of a fact and stops — most of each body was
-unreachable by the mechanism meant to reach it. A skill body is reachable in
-full at invocation, which is the whole reason this content is a plugin.
+Five skills and one small hook (below), each firing on a moment you are already
+in rather than on a topic word you have to think to type. They were cut from a
+shared memory tier because recall delivers only the first 4KB of a fact and
+stops — most of each body was unreachable by the mechanism meant to reach it. A
+skill body is reachable in full at invocation, which is the whole reason this
+content is a plugin.
 
 ## Install
 
@@ -42,20 +43,21 @@ work while nothing errors — which is exactly the trigger a memory index line
 could never match.
 
 **`toolkit-release`** — what goes wrong when releasing a plugin with the
-vendored `claude-plugin-dev` toolkit: the sandbox failure that leaves a release
-half-landed rather than failed, what the permission classifier does and does not
-refuse, what `error: uncommitted changes` actually excludes, why a first release
-cannot choose its own version through the recipe, and the post-pull check that
-catches a silently broken justfile. The
-happy path stays in the toolkit's own `plugin-dev/README.md`, which every
-consumer already has.
+vendored `claude-plugin-dev` toolkit: why `just release` must run unsandboxed,
+what the permission classifier does and does not refuse, what
+`error: uncommitted changes` actually excludes, the push-route rewrite no
+preflight catches, and the post-pull check that catches a silently broken
+justfile. The happy path stays in the toolkit's own `plugin-dev/README.md`,
+which every consumer already has.
 
 **`plugin-creation`** — taking a new or freshly extracted repository to a
 working plugin in the decided order: gitlore memory, then
 `/plugin-dev:create-plugin`, then the vendored `claude-plugin-dev` toolkit and
-its dogfood launcher. A read-only script, `plugin-craft-creation-status`, reports
-the first missing step and who acts on it; the skill body keeps the judgement
-and routes away from a hand-rolled `--plugin-dir` launch to the dogfood route.
+its dogfood launcher. A read-only script, `plugin-craft-creation-status`,
+reports the first missing step and who acts on it; the skill body keeps the
+judgement and routes away from a hand-rolled `--plugin-dir` launch to the
+dogfood route.
+
 ## The hook
 
 Alongside the skills the plugin ships one `PostToolUse` hook on `Bash`. When an

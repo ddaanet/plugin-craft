@@ -45,3 +45,28 @@ path segment, got the hard no-verdict on the first attempt. One run; the
 plain-session comparison P3 asks for was not made.
 
 Not run: P3 proper, P4, P5.
+
+## P6 — does the dogfood load avoid it? Yes; and P3 proper
+
+2026-10-27, CC 2.1.311 (the installed binary, called directly, bypassing the
+gitlore shim), headless, my human partner's go-ahead.
+
+Fixture under `/tmp/claude/p6`: `plug/` and `copy/`, each a bare
+`.claude-plugin/plugin.json`. Every run started in `plug/` with
+`claude -p --permission-mode auto` and asked for one `Write` to
+`plug/notes/<arm>-<n>.md`, no retry, then the tool result verbatim. Two runs
+per arm, all six in parallel:
+
+| Arm | Load | Result |
+| --- | --- | --- |
+| `dir` | `--plugin-dir plug` | hard no-verdict, both runs |
+| `env` | `CLAUDE_CODE_PLUGIN_DIRS=copy`, as the toolkit shim sets it | written, both runs |
+| `plain` | no plugin | written, both runs |
+
+**Result:** the failure follows `--plugin-dir` naming the directory written
+into. Loading a copy through `CLAUDE_CODE_PLUGIN_DIRS`, as the dogfood shim
+does, leaves the checkout writable, and so does a plain session; this is the
+comparison P3 asked for. The skill's cause and its dogfood claim stand.
+Not tested: `CLAUDE_CODE_PLUGIN_DIRS` naming the checkout itself.
+
+Still not run: P4, P5.
