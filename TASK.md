@@ -1,0 +1,3 @@
+## Current task
+
+The three delegated threads are finished: plugin-creation (S7 scratch walk done, two skill fixes landed), the claude --version hook (dogfood passed on CC 2.1.311 with a stub binary) and classifier no-verdict (skill section T2 landed and reviewed; probe P1 showed PermissionDenied additionalContext is never delivered, so the hook option T3 is closed). What remains is gated on my human partner naming the plugin-craft 0.1.5 release, which then unblocks retiring the classifier memory fact (T4). Next action: nothing until they name the release; the hook-authoring candidate in TODO.md can proceed independently if they want it.
