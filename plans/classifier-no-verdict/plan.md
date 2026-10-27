@@ -126,7 +126,8 @@ pattern). This writes into the shared ddaanet tier; see D6.
 ## Decisions pending
 
 1. **Form.** Decided 2026-10-26: O1 now (T2). O3/O4 are revisited only if
-   P1 shows `additionalContext` is delivered.
+   P1 shows `additionalContext` is delivered. P1 ran 2026-10-27: it is not
+   (`probes.md`), so O3/O4 are closed and T3 is dropped.
 2. **Run the probes?** P1-P5 need a real classifier denial. Default: my human
    partner runs P1 and P3 in a shim session; the rest wait.
 3. **Hook gating.** If a hook: match the hard text only, or any no-verdict?

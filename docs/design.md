@@ -84,6 +84,8 @@ A Claude Code plugin with no commands and no agents, and one hook: `hooks/hooks.
 
 **Prose only for the `claude --version` trap (D-11).** The rule was already written down and did not stop the incident; the trigger is a literal command, which suits a hook better than a skill.
 
+**A `PermissionDenied` hook for the classifier's no-verdict (FR-5).** It fires on the denial, but its `additionalContext` never reaches the model, and its `reason` reads `Classifier unavailable` rather than the text the model sees (probed on CC 2.1.311, `plans/classifier-no-verdict/probes.md`). **Reopen-if** Claude Code delivers context from that event.
+
 **Reading the version from `CLAUDE_CODE_EXECPATH`.** Undocumented, unverified inside a hook's environment, and dependent on the versioned install layout, so a different install fails silently. The transcript field is documented.
 
 **Naming it `craft:plugin-dev`.** `plugin-dev/` is the vendored toolkit directory and `plugin-dev:` is an existing skill namespace. A third meaning for the same word makes every reference ambiguous.
