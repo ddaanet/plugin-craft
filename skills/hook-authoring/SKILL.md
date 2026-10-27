@@ -1,6 +1,6 @@
 ---
 name: hook-authoring
-description: "What a Claude Code hook receives on stdin and what its stdout JSON can actually do — the control surface, the three output channels and their audiences, and how a `PreToolUse` decision meets the permission pipeline. Use when writing or debugging a hook script, choosing between `systemMessage`, `additionalContext` and stderr, or working out why a block, a rewrite or injected text did not land. Complements `plugin-dev:hook-development`, which covers configuration and the event basics; this covers the payload fields and channel behaviour it omits. Not a style guide for hook message wording."
+description: "What a Claude Code hook receives on stdin and what its stdout JSON can actually do — the control surface, the three output channels and their audiences, how a `PreToolUse` decision meets the permission pipeline, and how to contain a plugin's own agents. Use when writing or debugging a hook script, choosing between `systemMessage`, `additionalContext` and stderr, working out why a block, a rewrite or injected text did not land, or when a plugin agent's frontmatter `hooks:` never fire. Complements `plugin-dev:hook-development`, which covers configuration and the event basics; this covers the payload fields and channel behaviour it omits. Not a style guide for hook message wording."
 ---
 
 ## 1 · The control surface: no hook injects a tool call
@@ -58,7 +58,9 @@ recovery — the form the action should take instead — goes on
 
 The recovery does not belong on the deny reason. Putting it there means the
 instructional prose renders beside every block: noise for the human, and no
-better targeted for the agent, which reads both channels either way.
+better targeted for the agent, which reads both channels either way. What goes
+on `additionalContext` or a deny reason carries no conditional the hook could
+have evaluated itself; see `plugin-craft:skill-authoring` for the rule.
 
 The stamp is a version rather than a date on purpose, and the probe is worth
 re-running before relying on this: the failure mode is silent — a future CC that stopped delivering
@@ -104,9 +106,12 @@ learned.
 
 Per event: `UserPromptSubmit` → `additionalContext`. `PreToolUse` →
 `additionalContext` **and** `permissionDecisionReason` on a deny (§2), plus
-`systemMessage` for the human; stderr + exit 2 also surfaces. `PostToolUse` → `additionalContext`; stderr + exit 2 feeds back to the
-model. `PostToolUseFailure` routes the same way, and a non-zero Bash exit fires
-it instead of `PostToolUse` (`references/input-and-harness.md`).
+`systemMessage` for the human; stderr + exit 2 also surfaces. `PostToolUse` →
+`additionalContext`; stderr + exit 2 feeds back to the model.
+`PostToolUseFailure` routes the same way, and a non-zero Bash exit fires it
+instead of `PostToolUse` (`references/input-and-harness.md`). `PostToolBatch` →
+`additionalContext` with exit 0; exit 2 ends the turn and any other non-zero is
+invisible to the agent (`references/output-channels.md` §1).
 
 Route user-facing notices through `systemMessage`, not stderr-on-exit-0 and **not** via the agent —
 `additionalContext` saying "tell the user…" is model-dependent on the hot path.
@@ -114,8 +119,16 @@ Route user-facing notices through `systemMessage`, not stderr-on-exit-0 and **no
 ## 4 · Routing
 
 - **`permissionDecision`, `updatedInput`, the auto-mode classifier,
-  `updatedToolOutput`, a guard that must fail closed, or emitting file bodies
-  the agent must edit** → `references/output-channels.md`.
+  `updatedToolOutput`, a guard that must fail closed, even in the commands
+  after its own deny, `PostToolBatch` exit codes, an `updatedInput` rewrite that prompts or
+  is denied under a prefix allow rule, or emitting file bodies the agent must
+  edit** → `references/output-channels.md`.
 - **What arrives on stdin, which harness (`--print`, the Agent SDK) fires
   which event, or two hooks on one event sharing a file or a step** →
   `references/input-and-harness.md`.
+- **A plugin agent's frontmatter `hooks:` that never fires and nothing errors
+  (`sets hooks, which is ignored for plugin agents`), containing a plugin's own
+  agents through `hooks/hooks.json` keyed on `agent_type`, a session-wide guard
+  that fails open until the caller is identified and closed after, the
+  `SessionStart` self-check and the agent-opening tripwire** →
+  `references/plugin-agent-containment.md`.
