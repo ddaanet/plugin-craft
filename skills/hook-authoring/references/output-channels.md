@@ -28,6 +28,12 @@
   exit code **2**, or with `--verbose` for other codes (a "hook error" label
   appears). `SessionStart` is non-blocking — continues regardless of exit code.
 
+**`PermissionDenied` observes an auto-mode denial but cannot speak to the
+model (CC 2.1.311, `claude -p`).** The hook fires, yet its `additionalContext`
+is dropped — absent from the transcript, unseen by the model — and its payload's
+`reason` reads `Classifier unavailable`, not the denial text the model sees, so
+a hook testing `reason` for that text never matches.
+
 **Reporting an ERROR needs `exit 0`, not merely tolerates it (2026-07-15).** The
 naive "fail loudly ⇒ exit non-zero" is backwards: stdout JSON parses only on
 `exit 0`, so a non-zero exit **discards the `systemMessage`** — the only reliably
