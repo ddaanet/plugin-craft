@@ -70,3 +70,31 @@ comparison P3 asked for. The skill's cause and its dogfood claim stand.
 Not tested: `CLAUDE_CODE_PLUGIN_DIRS` naming the checkout itself.
 
 Still not run: P4, P5.
+
+## P4 and P5 — Edit fails like Write; a Bash heredoc writes
+
+2026-10-28, CC 2.1.312 (the installed binary, called directly), headless, my
+human partner's go-ahead.
+
+Fixture under `/tmp/claude/p7`: `plug/`, a bare `.claude-plugin/plugin.json`.
+Every run started in `plug/` with
+`claude -p --permission-mode auto --plugin-dir /tmp/claude/p7/plug` and asked
+for one call into `plug/notes/`, no retry, then the tool result verbatim. Two
+runs per arm, all eight in parallel:
+
+| Arm | Call | Result |
+| --- | --- | --- |
+| `write` (control) | `Write` a new file | hard no-verdict, both runs |
+| `edit` | `Edit` an existing file | hard no-verdict, both runs; file unchanged |
+| `nbedit` | `NotebookEdit` a cell | not run: the tool is absent from the session, loaded or deferred |
+| `heredoc` | Bash `cat > notes/h.md <<'X'` | written, both runs |
+
+The user settings enable the sandbox with `autoAllowBashIfSandboxed`, which
+could let the heredoc skip the classifier altogether. Two more heredoc runs
+passed `--settings '{"sandbox":{"enabled":false}}'`: written, both runs. That
+the override did turn the sandbox off was not checked independently.
+
+**Result:** the hard failure covers `Edit` as well as `Write`. A Bash heredoc
+writes into the `--plugin-dir` directory in the same session, so P5 passes
+and the plan's invariant no longer keeps the heredoc out of the skill.
+`NotebookEdit` stays untested: a headless session does not offer it.
