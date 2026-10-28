@@ -49,6 +49,8 @@ add_toolkit_files() { # vendored copy and the justfile import, hooks unwired
     mkdir -p "$ROOT/plugin-dev"
     echo 0.12.0 > "$ROOT/plugin-dev/VERSION"
     : > "$ROOT/plugin-dev/release.just"
+    # The real script, not a stub: check_python asks it for the shipped paths.
+    cp "$BATS_TEST_DIRNAME/../plugin-dev/dist.sh" "$ROOT/plugin-dev/dist.sh"
 }
 
 add_toolkit_wiring() { # the three commands install.sh spells, verbatim
@@ -84,7 +86,11 @@ add_envrc() {
 
 add_ignore() { printf '/dist/plugin/\n' > "$ROOT/.gitignore"; }
 
-add_dist_include() { printf '.claude-plugin\nskills\nREADME.md\n' > "$ROOT/dist.include"; }
+add_dist_include() { # every listed path must exist, or dist.sh paths refuses
+    mkdir -p "$ROOT/skills"
+    echo skill > "$ROOT/skills/README.md"
+    printf '.claude-plugin\nskills\nREADME.md\n' > "$ROOT/dist.include"
+}
 
 add_copy() { # the dogfood copy: ignored, never committed
     mkdir -p "$ROOT/dist/plugin/.claude-plugin"

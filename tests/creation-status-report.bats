@@ -88,6 +88,47 @@ load creation-status-helpers
     [[ "$output" == *"scripts/tool.py"* ]]
 }
 
+@test "dist.include path with a space holding python: python warn" {
+    mk_complete
+    mkdir -p "$ROOT/my tools"
+    printf 'print(1)\n' > "$ROOT/my tools/run.py"
+    printf '.claude-plugin\nskills\nmy tools\nREADME.md\n' > "$ROOT/dist.include"
+    commit_all
+    probe
+    [ "$status" -eq 0 ]
+    assert_status warn python
+    [[ "$output" == *"my tools/run.py"* ]]
+}
+
+@test "dist.include literal foo..bar holding python: python warn" {
+    mk_complete
+    mkdir -p "$ROOT/foo..bar"
+    printf 'print(1)\n' > "$ROOT/foo..bar/run.py"
+    printf '.claude-plugin\nskills\nfoo..bar\nREADME.md\n' > "$ROOT/dist.include"
+    commit_all
+    probe
+    [ "$status" -eq 0 ]
+    assert_status warn python
+    [[ "$output" == *"foo..bar/run.py"* ]]
+}
+
+@test "dist.include with a glob line: python skip carrying dist.sh's refusal" {
+    mk_complete
+    printf '.claude-plugin\nskills\n*.md\n' > "$ROOT/dist.include"
+    commit_all
+    probe
+    assert_status skip python
+    printf '%s\n' "$output" | awk -F'\t' '$1=="skip" && $2=="python" && $3 ~ /dist:/ {f=1} END {exit !f}'
+}
+
+@test "dist.include without plugin-dev/dist.sh: python skip" {
+    mk_complete
+    rm "$ROOT/plugin-dev/dist.sh"
+    commit_all
+    probe
+    assert_status skip python
+}
+
 @test "python outside the shipped paths: python ok" {
     mk_complete
     mkdir -p "$ROOT/docs"

@@ -2,6 +2,10 @@
 
 Design-significant changes only: decisions reversed, subsystems built or torn down, requirements added or dropped, a rationale that turned out false. Git history is the full record.
 
+## 2026-10-28 — the probe's python check reads the shipped paths from the vendored toolkit
+
+`check_python` in `bin/plugin-craft-creation-status` no longer parses `dist.include` by hand: it runs `plugin-dev/dist.sh paths`, so a literal `foo..bar` is scanned and a refused allowlist (glob, blank padding, a listed path matching nothing) or a missing `dist.sh` makes the check `skip` instead of guessing.
+
 ## 2026-10-26 — `verifying-plugin-changes` names the classifier's no-verdict failure
 
 A file write under a `--plugin-dir` checkout can end in `auto mode classifier gave no verdict ... hard failure`, and the retry fails the same way. The brief offered a hook or a skill description; the plan found `PermissionDenied` to be the only hook event that observes the failure, and the section won because whether a hook's `additionalContext` reaches the model is unverified and the hook would pin to a message the bundle builds from per-reason templates. FR-5 now has a second trigger, the error string, in the description, and the body gained a short section: the hard family only, the cause, and a `python3`-script route that is itself classified. A live probe later closed the hook: `PermissionDenied` context is not delivered, and the hook's `reason` is not the model-visible text. A heredoc is not named as a route because it was never tested.
