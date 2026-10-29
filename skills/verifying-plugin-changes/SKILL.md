@@ -168,11 +168,9 @@ one-retry texts say to retry once; do that instead. A denial, where the
 classifier judged the action and blocked it saying why, is a different
 failure, and no route around it is sanctioned.
 
-Cause: `--plugin-dir` marks the loaded directory's content sensitive, so a
-`Write` there can get no verdict, and retrying repeats the answer. Loading the
-plugin through the toolkit's dogfood launcher, which loads a synced copy
-rather than the checkout, avoids it. Route: save a `python3` script that
-writes the content under `$TMPDIR` with `Write`, which works outside the
-checkout, and run it via Bash. That Bash call is classified on its own, so
-the route is reviewed, not a bypass. A dispatcher puts this route in the
-prompt of any delegate that writes files in such a checkout.
+Cause: `--plugin-dir` marks the loaded directory's content sensitive on
+purpose, so `Write`, `Edit` and `NotebookEdit` there all get the hard failure,
+and retrying repeats the answer. Fix: relaunch with the plugin loaded through
+the toolkit's dogfood launcher, which loads a synced copy rather than the
+checkout, or without `--plugin-dir`. Otherwise stop and tell the user, as the
+error says; do not look for another way to write the file.

@@ -2,6 +2,10 @@
 
 Design-significant changes only: decisions reversed, subsystems built or torn down, requirements added or dropped, a rationale that turned out false. Git history is the full record.
 
+## 2026-10-29 — the no-verdict section stops teaching a route around the block
+
+`verifying-plugin-changes` no longer names the `python3`-script route. Claude Code marks inline plugin roots sensitive deliberately, and the error text says not to retry and, if the write is essential, to stop and tell the user. Probe P4 showed `Write`, `Edit` and `NotebookEdit` all get the hard failure, so the section now states the cause for the file-write tools and gives the fix: relaunch through the toolkit's dogfood launcher (a synced copy) or without `--plugin-dir`, otherwise stop and tell the user. The earlier entry's route is superseded; no Bash write route is named.
+
 ## 2026-10-28 — the probe's python check reads the shipped paths from the vendored toolkit
 
 `check_python` in `bin/plugin-craft-creation-status` no longer parses `dist.include` by hand: it runs `plugin-dev/dist.sh paths`, so a literal `foo..bar` is scanned and a refused allowlist (glob, blank padding, a listed path matching nothing) or a missing `dist.sh` makes the check `skip` instead of guessing.

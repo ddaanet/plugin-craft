@@ -16,7 +16,7 @@
 
 **FR-4 · `skill-authoring` carries what makes a skill findable and self-sufficient.** Description shape and its per-session cost, what `allowed-tools` grants, which second-person forms the imperative rule targets, how a bundled script is reached when the plugin env vars are absent, and the rule that agent-bound text carries no conditional a script could have evaluated. *Done (prose)* — `skills/skill-authoring/`.
 
-**FR-5 · `verifying-plugin-changes` fires on a symptom with no keyword, and on one error string.** An edit to plugin code that appears not to work while nothing errors; and the auto-mode classifier's hard-failure `gave no verdict` on a file write under `--plugin-dir`, which the skill's section routes to a `python3` script. *Done (prose)* — the `description:` of `skills/verifying-plugin-changes/SKILL.md`; see L-1.
+**FR-5 · `verifying-plugin-changes` fires on a symptom with no keyword, and on one error string.** An edit to plugin code that appears not to work while nothing errors; and the auto-mode classifier's hard-failure `gave no verdict` on a file write under `--plugin-dir`, which the skill's section answers with a relaunch through the dogfood launcher, or a stop and a word to the user. *Done (prose)* — the `description:` of `skills/verifying-plugin-changes/SKILL.md`; see L-1.
 
 **FR-6 · `toolkit-release` carries only what goes wrong.** The procedure stays in the vendored `plugin-dev/README.md`, which every consumer of the toolkit already has. *Done (prose)* — `skills/toolkit-release/SKILL.md`.
 
