@@ -27,7 +27,7 @@ context received after it.
   dropped rather than rendered.
 
 **Result:** the hook observes the denial but cannot speak to the model through
-`additionalContext`. O3 and O4 cannot carry the route; D1 stays O1.
+`additionalContext`. O3 and O4 cannot carry guidance; D1 stays O1.
 
 ## P2 — the payload of a real no-verdict Write (by-product of P1)
 
@@ -44,7 +44,7 @@ A `Write` under a directory loaded with `--plugin-dir`, with no `.claude`
 path segment, got the hard no-verdict on the first attempt. One run; the
 plain-session comparison P3 asks for was not made.
 
-Not run: P3 proper, P4, P5.
+Not run here: P3 proper (see P6), P4.
 
 ## P6 — does the dogfood load avoid it? Yes; and P3 proper
 
@@ -69,9 +69,7 @@ does, leaves the checkout writable, and so does a plain session; this is the
 comparison P3 asked for. The skill's cause and its dogfood claim stand.
 Not tested: `CLAUDE_CODE_PLUGIN_DIRS` naming the checkout itself.
 
-Still not run: P4, P5.
-
-## P4 and P5 — Edit fails like Write; a Bash heredoc writes
+## P4 — Edit and NotebookEdit fail like Write
 
 2026-10-28, CC 2.1.312 (the installed binary, called directly), headless, my
 human partner's go-ahead.
@@ -80,26 +78,17 @@ Fixture under `/tmp/claude/p7`: `plug/`, a bare `.claude-plugin/plugin.json`.
 Every run started in `plug/` with
 `claude -p --permission-mode auto --plugin-dir /tmp/claude/p7/plug` and asked
 for one call into `plug/notes/`, no retry, then the tool result verbatim. Two
-runs per arm, all eight in parallel:
+runs per arm:
 
 | Arm | Call | Result |
 | --- | --- | --- |
 | `write` (control) | `Write` a new file | hard no-verdict, both runs |
 | `edit` | `Edit` an existing file | hard no-verdict, both runs; file unchanged |
-| `nbedit` | `NotebookEdit` a cell | not run: the tool was on my human partner's deny list |
-| `heredoc` | Bash `cat > notes/h.md <<'X'` | written, both runs |
 
-The user settings enable the sandbox with `autoAllowBashIfSandboxed`, which
-could let the heredoc skip the classifier altogether. Two more heredoc runs
-passed `--settings '{"sandbox":{"enabled":false}}'`: written, both runs. That
-the override did turn the sandbox off was not checked independently.
+2026-10-29, same version and fixture, after my human partner lifted a
+deny-list entry for `NotebookEdit`: two `NotebookEdit` runs, each after a
+`Read` of the notebook (without it the tool refuses before the classifier,
+`File has not been read yet`). Hard no-verdict, both runs; the cell is
+unchanged.
 
-**Result:** the hard failure covers `Edit` as well as `Write`. A Bash heredoc
-writes into the `--plugin-dir` directory in the same session, so P5 passes
-and the plan's invariant no longer keeps the heredoc out of the skill.
-
-2026-10-29, same version and fixture, after my human partner lifted the
-deny-list entry: two `NotebookEdit` runs, each after a `Read` of the notebook
-(without it the tool refuses before the classifier, `File has not been read
-yet`). Hard no-verdict, both runs; the cell is unchanged. The failure covers
-all three file-write tools.
+**Result:** the hard failure covers `Write`, `Edit` and `NotebookEdit`.

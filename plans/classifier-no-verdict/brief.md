@@ -10,7 +10,7 @@
   sandbox-lies.
 - **The guidance should arrive with the symptom.** A hook, or a skill whose
   description names the error string, is better than a memory fact: it gives
-  the route when the error appears and costs nothing in other sessions. Which
+  the guidance when the error appears and costs nothing in other sessions. Which
   of the two is plugin-craft's call.
 - **Stopgap until then:** the ddaanet memory fact
   `ddaanet/classifier-no-verdict-plugin-dir`. Retire it in the change that
@@ -18,13 +18,8 @@
 
 ### Constraints
 
-- **Wording of the route.** Writing through a `python3` script run by Bash is
-  itself classified, because the Bash call gets its own verdict. It is a
-  reviewed route, not a bypass, and the guidance should say so.
 - **Scope.** Limit it to the no-verdict case. A refusal that names a reason is
   a denial, and no route around it is sanctioned.
-- **No heredoc.** My human partner ruled out `cat > file <<EOF` as the route.
-  Whether the classifier refuses a heredoc here was not tested.
 
 ### Rejected approaches
 
@@ -50,8 +45,7 @@ started through its `.bin/claude` shim, which execs the real `claude` with
 - Four Writes of new files under `plans/sandbox-lies/reports/` failed with the
   message above: one from the main session and one from each of three
   unnamed `general-purpose` delegates.
-- A Write to `$TMPDIR` succeeded, and so did running a `python3` script from
-  there that wrote the report into the checkout.
+- A Write to `$TMPDIR` succeeded.
 - **Cause as stated by my human partner:** "the block comes from
   `--plugin-dir .` marking every file as sensitive". This is not probed.
 

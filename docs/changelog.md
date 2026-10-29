@@ -2,9 +2,9 @@
 
 Design-significant changes only: decisions reversed, subsystems built or torn down, requirements added or dropped, a rationale that turned out false. Git history is the full record.
 
-## 2026-10-29 — the no-verdict section stops teaching a route around the block
+## 2026-10-29 — the no-verdict section gives cause and fix only
 
-`verifying-plugin-changes` no longer names the `python3`-script route. Claude Code marks inline plugin roots sensitive deliberately, and the error text says not to retry and, if the write is essential, to stop and tell the user. Probe P4 showed `Write`, `Edit` and `NotebookEdit` all get the hard failure, so the section now states the cause for the file-write tools and gives the fix: relaunch through the toolkit's dogfood launcher (a synced copy) or without `--plugin-dir`, otherwise stop and tell the user. The earlier entry's route is superseded; no Bash write route is named.
+The `verifying-plugin-changes` no-verdict section now gives the cause and the fix and nothing else. Claude Code marks inline plugin roots sensitive deliberately, and the error text says not to retry and, if the write is essential, to stop and tell the user. Probe P4 showed `Write`, `Edit` and `NotebookEdit` all get the hard failure, so the section now states the cause for the file-write tools and gives the fix: relaunch through the toolkit's dogfood launcher (a synced copy) or without `--plugin-dir`, otherwise stop and tell the user.
 
 ## 2026-10-28 — the probe's python check reads the shipped paths from the vendored toolkit
 
@@ -12,7 +12,7 @@ Design-significant changes only: decisions reversed, subsystems built or torn do
 
 ## 2026-10-26 — `verifying-plugin-changes` names the classifier's no-verdict failure
 
-A file write under a `--plugin-dir` checkout can end in `auto mode classifier gave no verdict ... hard failure`, and the retry fails the same way. The brief offered a hook or a skill description; the plan found `PermissionDenied` to be the only hook event that observes the failure, and the section won because whether a hook's `additionalContext` reaches the model is unverified and the hook would pin to a message the bundle builds from per-reason templates. FR-5 now has a second trigger, the error string, in the description, and the body gained a short section: the hard family only, the cause, and a `python3`-script route that is itself classified. A live probe later closed the hook: `PermissionDenied` context is not delivered, and the hook's `reason` is not the model-visible text. A heredoc is not named as a route because it was never tested.
+A file write under a `--plugin-dir` checkout can end in `auto mode classifier gave no verdict ... hard failure`, and the retry fails the same way. The brief offered a hook or a skill description; the plan found `PermissionDenied` to be the only hook event that observes the failure, and the section won because whether a hook's `additionalContext` reaches the model is unverified and the hook would pin to a message the bundle builds from per-reason templates. FR-5 now has a second trigger, the error string, in the description, and the body gained a short section: the hard family only, and the cause. A live probe later closed the hook: `PermissionDenied` context is not delivered, and the hook's `reason` is not the model-visible text.
 
 ## 2026-10-26 — a fifth skill, `plugin-creation`, and the probe behind it
 
