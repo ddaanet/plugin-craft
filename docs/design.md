@@ -28,7 +28,7 @@
 
 **FR-10 · `plugin-creation` owns the sequence across gitlore, create-plugin and the toolkit, and nothing the shipped docs carry.** It routes away from a bare `--plugin-dir` to the dogfood launcher. *Done (prose)* — `skills/plugin-creation/SKILL.md`.
 
-**FR-11 · The route's state is read by `bin/plugin-craft-creation-status`.** Read-only, one line per check and a `next` line. The file-format readers it sources live in `lib/creation-status-readers.sh`, outside `bin/` so they stay off PATH. *Done* — pinned by `tests/plugin-craft-creation-status.bats` in `precommit`.
+**FR-11 · The route's state is read by `bin/plugin-craft-creation-status`.** One line per check and a `next` line. The inspected repository is not written to; the python check makes temp files and runs that repository's own `plugin-dev/dist.sh`. The file-format readers it sources live in `lib/creation-status-readers.sh`, outside `bin/` so they stay off PATH. *Done* — pinned by `tests/plugin-craft-creation-status.bats` in `precommit`.
 
 ## Non-functional requirements
 

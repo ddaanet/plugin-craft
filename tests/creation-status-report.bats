@@ -127,6 +127,7 @@ load creation-status-helpers
     commit_all
     probe
     assert_status skip python
+    printf '%s\n' "$output" | awk -F'\t' '$1=="skip" && $2=="python" && $3 ~ /not vendored/ {f=1} END {exit !f}'
 }
 
 @test "python outside the shipped paths: python ok" {

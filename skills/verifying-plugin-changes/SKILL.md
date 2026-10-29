@@ -172,5 +172,7 @@ Cause: `--plugin-dir` marks the loaded directory's content sensitive on
 purpose, so `Write`, `Edit` and `NotebookEdit` there all get the hard failure,
 and retrying repeats the answer. Fix: relaunch with the plugin loaded through
 the toolkit's dogfood launcher, which loads a synced copy rather than the
-checkout, or without `--plugin-dir`. Otherwise stop and tell the user, as the
-error says; do not look for another way to write the file.
+checkout, or without `--plugin-dir`: ask the user to relaunch that way, since
+only the user can. Meanwhile, as the error says, continue with work that does
+not need the write; if the write is essential, stop and tell the user. Do not
+look for another way to write the file.

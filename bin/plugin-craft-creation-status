@@ -8,9 +8,11 @@
 #   next\t<check-id>\t<actor>\t<action>
 # Status: ok | missing | blocked | warn | skip. Actor: agent | shell | decision.
 # Exit 0 when nothing is missing or blocked, 1 otherwise, 2 on a usage error
-# (stderr only). Reads only: git runs with --no-optional-locks, nothing writes
-# or touches the network. Residual bound: a tab or newline inside a path is
-# flattened to a blank, so a shell action for such a path would not paste.
+# (stderr only). The inspected repository is never written to: git runs with
+# --no-optional-locks and nothing touches the network. The python check does
+# make temp files and run the repository's own plugin-dev/dist.sh. Residual
+# bound: a tab or newline inside a path is flattened to a blank, so a shell
+# action for such a path would not paste.
 # The file-format readers live in ../lib/creation-status-readers.sh, found
 # from this script's own location so the lib stays off PATH.
 
@@ -334,7 +336,7 @@ check_python() {
         fi
         # The vendored toolkit reads the allowlist; stdout is NUL-delimited, so
         # it goes through a file rather than a $(...) capture.
-        list=$(mktemp) || { emit skip python "cannot create a temporary file"; return; }
+        list=$(mktemp 2>/dev/null) || { emit skip python "cannot create a temporary file"; return; }
         err=$(bash "$ROOT/plugin-dev/dist.sh" paths "$ROOT" 2>&1 >"$list") || rc=$?
         if [ "$rc" -ne 0 ] && [ "$rc" -ne 3 ]; then
             rm -f "$list"
