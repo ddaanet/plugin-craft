@@ -86,7 +86,7 @@ runs per arm, all eight in parallel:
 | --- | --- | --- |
 | `write` (control) | `Write` a new file | hard no-verdict, both runs |
 | `edit` | `Edit` an existing file | hard no-verdict, both runs; file unchanged |
-| `nbedit` | `NotebookEdit` a cell | not run: the tool is absent from the session, loaded or deferred |
+| `nbedit` | `NotebookEdit` a cell | not run: the tool was on my human partner's deny list |
 | `heredoc` | Bash `cat > notes/h.md <<'X'` | written, both runs |
 
 The user settings enable the sandbox with `autoAllowBashIfSandboxed`, which
@@ -97,4 +97,9 @@ the override did turn the sandbox off was not checked independently.
 **Result:** the hard failure covers `Edit` as well as `Write`. A Bash heredoc
 writes into the `--plugin-dir` directory in the same session, so P5 passes
 and the plan's invariant no longer keeps the heredoc out of the skill.
-`NotebookEdit` stays untested: a headless session does not offer it.
+
+2026-10-29, same version and fixture, after my human partner lifted the
+deny-list entry: two `NotebookEdit` runs, each after a `Read` of the notebook
+(without it the tool refuses before the classifier, `File has not been read
+yet`). Hard no-verdict, both runs; the cell is unchanged. The failure covers
+all three file-write tools.
