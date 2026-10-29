@@ -329,7 +329,16 @@ check_origin() {
 
 check_python() {
     local entries=(bin hooks scripts) entry found="" list err rc=0
-    if [ -f "$ROOT/dist.include" ]; then
+    if [ -f "$ROOT/dist.include" ] && ! in_head dist.include; then
+        emit skip python "dist.include is not committed, so the shipped paths are not settled"
+        return
+    fi
+    if in_head dist.include; then
+        # dist.sh reads the working tree, so it speaks for HEAD only while the two agree.
+        if ! g diff --quiet HEAD -- dist.include; then
+            emit skip python "dist.include has uncommitted changes; commit it to check the shipped paths"
+            return
+        fi
         if [ ! -f "$ROOT/plugin-dev/dist.sh" ]; then
             emit skip python "dist.include lists the shipped paths but plugin-dev/dist.sh is not vendored"
             return

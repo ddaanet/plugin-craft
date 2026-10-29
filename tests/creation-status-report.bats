@@ -130,6 +130,26 @@ load creation-status-helpers
     printf '%s\n' "$output" | awk -F'\t' '$1=="skip" && $2=="python" && $3 ~ /not vendored/ {f=1} END {exit !f}'
 }
 
+@test "uncommitted dist.include edit: python skip, detail says uncommitted" {
+    mk_complete
+    mkdir -p "$ROOT/extra"
+    printf 'print(1)\n' > "$ROOT/extra/run.py"
+    commit_all
+    printf '.claude-plugin\nskills\nextra\nREADME.md\n' > "$ROOT/dist.include"
+    probe
+    assert_status skip python
+    printf '%s\n' "$output" | awk -F'\t' '$1=="skip" && $2=="python" && $3 ~ /uncommitted/ {f=1} END {exit !f}'
+}
+
+@test "dist.include only in the working tree: python skip, detail says not committed" {
+    mk_complete
+    git -C "$ROOT" rm -q --cached dist.include
+    git -C "$ROOT" commit -q -m "drop dist.include from HEAD"
+    probe
+    assert_status skip python
+    printf '%s\n' "$output" | awk -F'\t' '$1=="skip" && $2=="python" && $3 ~ /not committed/ {f=1} END {exit !f}'
+}
+
 @test "python outside the shipped paths: python ok" {
     mk_complete
     mkdir -p "$ROOT/docs"

@@ -2,6 +2,10 @@
 
 Design-significant changes only: decisions reversed, subsystems built or torn down, requirements added or dropped, a rationale that turned out false. Git history is the full record.
 
+## 2026-10-29 — the probe's python check judges the committed `dist.include`
+
+`dist.sh paths` reads the working-tree `dist.include`, while the rest of the probe judges HEAD, so an uncommitted edit made `check_python` report on an allowlist that is not what ships. `dist.sh` cannot read from HEAD and the probe may not write objects, so the check now `skip`s when `dist.include` is not committed or differs from HEAD, and runs `dist.sh paths` only when the two agree. The files scanned stay the working-tree files.
+
 ## 2026-10-29 — the no-verdict section gives cause and fix only
 
 The `verifying-plugin-changes` no-verdict section now gives the cause and the fix and nothing else. Claude Code marks inline plugin roots sensitive deliberately, and the error text says not to retry and, if the write is essential, to stop and tell the user. Probe P4 showed `Write`, `Edit` and `NotebookEdit` all get the hard failure, so the section now states the cause for the file-write tools and gives the fix: relaunch through the toolkit's dogfood launcher (a synced copy) or without `--plugin-dir`, otherwise stop and tell the user.
