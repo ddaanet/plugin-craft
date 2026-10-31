@@ -8,7 +8,7 @@
 
 ## Functional requirements
 
-**FR-1 · One plugin, five skills and one hook, each firing on a moment.** Every skill description names a moment a session is already in rather than a topic word; the hook fires on the one moment with a mechanical trigger, `claude --version` (D-11). *Done (prose)* for the skills — the `description:` of each `skills/*/SKILL.md`; *Done* for the hook — `hooks/hooks.json`, pinned by `tests/claude-version-hook.bats`.
+**FR-1 · One plugin, five skills and one hook, each firing on a moment.** Every skill description names a moment a session is already in rather than a topic word; the hook fires on the one moment with a mechanical trigger, `claude --version` (D-11). *Done (prose)* for the skills — the `description:` of each `skills/*/SKILL.md`; *Done* for the hook — `hooks/hooks.json`, its matcher and annotation pinned by `tests/claude-version-hook.bats` and its cost on long commands by `tests/claude-version-hook-cost.bats`.
 
 **FR-2 · `hook-authoring` carries the whole hook surface.** The stdin payload, the stdout control surface, the channel mechanics, the `PreToolUse` permission pipeline, the scripted-harness comparison and containing a plugin's own agents, whose frontmatter hooks are dropped. *Done (prose)* — `skills/hook-authoring/`.
 

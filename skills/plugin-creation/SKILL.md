@@ -37,7 +37,9 @@ actor, then run the probe again. Stop when it says `next none`.
 
 The probe computes every check independently: an extracted repository with a
 manifest but no gitlore shows both facts, and `next` names only the first
-missing one. A `skip` line means an earlier block made it meaningless.
+missing one. A `skip` line means an earlier block made it meaningless,
+except for `python`, whose skip detail names its own cause and, where there is
+one, the action to take.
 
 ## Route ids
 

@@ -335,7 +335,10 @@ check_python() {
     fi
     if in_head dist.include; then
         # dist.sh reads the working tree, so it speaks for HEAD only while the two agree.
-        if ! g diff --quiet HEAD -- dist.include; then
+        # Blob ids, not `git diff`: a porcelain diff refreshes and rewrites the index.
+        if [ ! -f "$ROOT/dist.include" ] ||
+            [ "$(g rev-parse HEAD:dist.include)" != \
+                "$(g hash-object --path=dist.include -- "$ROOT/dist.include")" ]; then
             emit skip python "dist.include has uncommitted changes; commit it to check the shipped paths"
             return
         fi

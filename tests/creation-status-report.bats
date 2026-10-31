@@ -164,10 +164,17 @@ load creation-status-helpers
     mk_repo
     add_gitlore
     add_manifest
+    # A committed allowlist and the vendored dist.sh: the python check's
+    # HEAD comparison and dist.sh run are inside the snapshot too.
+    add_toolkit_files
+    add_dist_include
+    git -C "$ROOT" add dist.include plugin-dev skills
+    git -C "$ROOT" commit -q -m "allowlist and toolkit"
     git -C "$ROOT" add .gitmodules memory # leaves staged and untracked state
-    # A tracked file whose stat no longer matches the index: plain `git status`
-    # rewrites the index to refresh it, which the Post clause forbids.
-    touch -t 202001010000 "$ROOT/README.md"
+    # Tracked files whose stat no longer matches the index: plain `git status`
+    # or `git diff` rewrites the index to refresh it, which the Post clause
+    # forbids.
+    touch -t 202001010000 "$ROOT/README.md" "$ROOT/dist.include"
     snapshot() {
         # Index first, and nothing below may refresh it.
         cksum < "$ROOT/.git/index"
@@ -180,6 +187,8 @@ load creation-status-helpers
     probe
     # The probe ran: a missing script would leave the snapshots trivially equal.
     [ -n "$(next_field 2)" ]
+    # ...and the python check got past its HEAD comparison to dist.sh.
+    assert_status ok python
     after="$(snapshot)"
     [ "$before" = "$after" ]
 }
