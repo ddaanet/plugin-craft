@@ -1,4 +1,3 @@
 ## Remaining
 
-- `just precommit` fails inside the macOS command sandbox: `check-refs`'s `mktemp` resolves to `/var/folders/…` (`Operation not permitted`), and the creation-status tests report "cannot create a temporary file". It passes unsandboxed and passed sandboxed on Linux.
-- Under the macOS command sandbox the probe's python check would likely skip with "cannot create a temporary file": both the probe's own `mktemp` and the vendored `dist.sh`'s `mktemp -d` need a writable temp dir. The `dist.sh` half needs a claude-plugin-dev change. Unverified on macOS.
+- Inside the macOS command sandbox, `just precommit` fails at `check-refs` and the probe's python check always skips (8 bats tests fail): macOS `mktemp` with no template writes to `/var/folders`, ignoring `$TMPDIR`, and the sandbox grants only `$TMPDIR`. The probe's own call is fixed; the bare calls left are in the vendored `check-refs.sh` and `dist.sh`, briefed to claude-plugin-dev's `inbox/`. Take the fix with `just update-plugin-dev` once a dist tag carries it, then re-run the suite sandboxed on macOS.

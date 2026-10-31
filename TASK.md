@@ -1,0 +1,3 @@
+## Current task
+
+v0.1.6 is released and the probe's own mktemp call is fixed. The one open item in TODO.md waits on claude-plugin-dev: its vendored check-refs.sh and dist.sh still call mktemp with no template, which on macOS ignores $TMPDIR and fails inside the command sandbox, so just precommit and 8 bats tests fail sandboxed on macOS. Briefs sit in claude-plugin-dev's and shell-gotchas' inbox/; neither repo is ours to edit. Next action: check whether claude-plugin-dev has a dist tag carrying the fix; if it does, run just update-plugin-dev with that dist tag and re-run the suite sandboxed on macOS, otherwise ask my human partner what to take up next.

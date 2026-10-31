@@ -348,7 +348,10 @@ check_python() {
         fi
         # The vendored toolkit reads the allowlist; stdout is NUL-delimited, so
         # it goes through a file rather than a $(...) capture.
-        list=$(mktemp 2>/dev/null) || { emit skip python "cannot create a temporary file"; return; }
+        # An explicit template: macOS mktemp prefers its per-user /var/folders
+        # dir to $TMPDIR, and the command sandbox only grants $TMPDIR.
+        list=$(mktemp "${TMPDIR:-/tmp}/plugin-craft-python.XXXXXX" 2>/dev/null) ||
+            { emit skip python "cannot create a temporary file"; return; }
         err=$(bash "$ROOT/plugin-dev/dist.sh" paths "$ROOT" 2>&1 >"$list") || rc=$?
         if [ "$rc" -ne 0 ] && [ "$rc" -ne 3 ]; then
             rm -f "$list"
