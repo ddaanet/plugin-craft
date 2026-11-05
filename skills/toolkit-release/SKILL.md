@@ -99,8 +99,12 @@ check stands regardless of the migration notes, which nothing enforces.
 
 The source repo keeps no changelog: the notes in `plugin-dev/migrations/`,
 one per release that needs a consumer step, are the shipped signal, and
-`update.sh` prints the ones for the crossed range after the pull. A release
-with no note needed no consumer step. For the why behind a note, or for a
-release without one, read the source history from a local clone of the source
-repo: `git -C <source-checkout> log <old-tag>..<new-tag>` over the crossed
-source tags (`vX.Y.Z`, not `dist-vX.Y.Z`), which needs no checkout.
+`update.sh` prints the ones for the crossed range after the pull. For the why
+behind a note, or for a release without one, read the source history from a
+local clone of the source repo: `git -C <source-checkout> log
+<old-tag>..<new-tag>` over the crossed source tags (`vX.Y.Z`, not
+`dist-vX.Y.Z`), which needs no checkout.
+
+The clone's tags lag the remote until fetched, so run
+`git -C <source-checkout> fetch --tags` first. That fetch writes into another
+repository, so it must run outside the command sandbox.
