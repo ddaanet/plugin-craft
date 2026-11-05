@@ -116,3 +116,7 @@ release is the README's Conventions and a bare `just release`, with no bump
 argument. A release on the agent's own initiative risks a classifier denial, so
 wait for my human partner to name it, and use `toolkit-release` if it goes
 wrong. Code that looks stale after an edit is `verifying-plugin-changes`.
+
+If a mounted memory tier holds an `owned-projects.md`, add the new repo's row
+to it, committed through the memory gate like any memory edit; a sibling's
+session routes findings by that table and asks about a repo it does not list.

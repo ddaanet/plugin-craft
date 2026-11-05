@@ -120,6 +120,6 @@ A Claude Code plugin with no commands and no agents, and one hook: `hooks/hooks.
 
 **N-3 · No eval suite.** The skills are prose; `check-skill-text.sh` covers the one property that is mechanically checkable. Whether a description triggers is L-1.
 
-## Changelog
+## History
 
-Design-significant changes are in `docs/changelog.md`. Git history is the full record and is not duplicated there.
+Git history is the record of change: the why of a design-significant change goes in the commit body or into this document, and no changelog is kept beside it.
