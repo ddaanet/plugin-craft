@@ -2,6 +2,10 @@
 
 Design-significant changes only: decisions reversed, subsystems built or torn down, requirements added or dropped, a rationale that turned out false. Git history is the full record.
 
+## 2026-11-05 — `toolkit-release` reads migration notes, not a changelog
+
+The section telling a consumer to read the toolkit's `docs/changelog.md` from the source checkout pointed at a file claude-plugin-dev deleted in 0.15.0. The shipped signal is now `plugin-dev/migrations/`, which `update.sh` prints for the crossed range, with `git log` over the crossed source tags for the rest. The vendored toolkit moved from 0.12.0 to 0.15.0, which carries the `mktemp` template fix the sandboxed macOS suite waited on.
+
 ## 2026-10-29 — the probe's python check judges the committed `dist.include`
 
 `dist.sh paths` reads the working-tree `dist.include`, while the rest of the probe judges HEAD, so an uncommitted edit made `check_python` report on an allowlist that is not what ships. `dist.sh` cannot read from HEAD and the probe may not write objects, so the check now `skip`s when `dist.include` is not committed or differs from HEAD, and runs `dist.sh paths` only when the two agree. The files scanned stay the working-tree files.
