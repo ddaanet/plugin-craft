@@ -3,3 +3,4 @@ tmp/
 /.mcp.json
 
 /dist/plugin/
+/.venv/
