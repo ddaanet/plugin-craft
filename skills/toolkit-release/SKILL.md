@@ -95,11 +95,18 @@ as its own commit, separate from the subtree-pull merge commit: the merge
 commit is toolkit content, the fix is the consumer repo's own. The `just --list`
 check stands regardless of the migration notes, which nothing enforces.
 
-## Read the changelog from the source checkout
+## Read the migration notes, then the source log
 
-Read the toolkit's `docs/changelog.md` from a local clone of the source
-repo, never from `plugin-dev/` — the `dist-` tree ships a `manual/` but no
-changelog. Crossing
-more than a patch version rewards checking it: its pointer lines say outright
-when a release is breaking. `git -C <source-checkout> show
-<tag>:docs/changelog.md` reads a specific version without checking it out.
+The source repo keeps no changelog: the notes in `plugin-dev/migrations/`,
+one per release that needs a consumer step, are the shipped signal, and
+`update.sh` prints the ones for the crossed range after the pull. For the why
+behind a note, or for a release without one, read the source history from a
+local clone of the source repo: `git -C <source-checkout> log
+<old-tag>..<new-tag>` over the crossed source tags (`vX.Y.Z`, not
+`dist-vX.Y.Z`), which needs no checkout.
+
+The clone's tags lag the remote until fetched, so run
+`git -C <source-checkout> fetch --tags` first. That fetch writes into another
+repository, so it is not an agent call: print the command verbatim, with the
+real checkout path substituted, in a code block for my human partner to run in
+their own terminal, and wait before reading the log.
