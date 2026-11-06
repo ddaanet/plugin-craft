@@ -7,3 +7,6 @@
   Prospective content — plans, specs, briefs — goes in `plans/` at the repo
   root. A brief arriving from a session in *another* repository goes in
   `inbox/`, never the repo root, where it reads as a tracked project document.
+- Before proposing an alternative design, read
+  `docs/references/rejected-alternatives.md`; a hub conclusion in
+  `docs/design.md` and its node argument change in the same commit.

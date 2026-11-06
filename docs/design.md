@@ -1,5 +1,7 @@
 # plugin-craft — design
 
+This document is a hub: it holds every conclusion, and `docs/references/` holds the argument behind an entry — read the node before re-proposing or changing what it argues.
+
 **Do not re-litigate** — the plugin boundary (D-1), the §7 split point (D-2), the failure-mode scoping of `toolkit-release` (D-5), and the presence of `my human partner` phrasing in shipped skill text (D-9).
 
 ## Status legend
@@ -42,13 +44,13 @@
 
 ## Architecture
 
-A Claude Code plugin with no commands and no agents, and one hook: `hooks/hooks.json` registers a `PostToolUse` hook on `Bash` that runs `hooks/claude-version.sh`, with two helpers beside it, `running-version.sh` and `is-claude-version-call.sh`. Five skills under `skills/`, discovered from the plugin root; `hook-authoring` additionally carries `references/output-channels.md`, `references/input-and-harness.md` and `references/plugin-agent-containment.md`, which its `SKILL.md` routes to by what a reader arrives holding; `skill-authoring` carries `references/bundled-scripts.md`, routed to the same way. `bin/plugin-craft-creation-status` is the `plugin-creation` skill's probe, a bash entry point that sources `lib/creation-status-readers.sh`, found from the script's own location through any symlinks; `dist.include` ships `bin`, `lib` and `hooks`.
+A Claude Code plugin with no commands and no agents, and one hook: `hooks/hooks.json` registers a `PostToolUse` hook on `Bash` that runs `hooks/claude-version.sh`, with two helpers beside it, `running-version.sh` and `is-claude-version-call.sh`. Five skills under `skills/`, discovered from the plugin root; `hook-authoring` additionally carries `references/output-channels.md`, `references/input-and-harness.md` and `references/plugin-agent-containment.md`, which its `SKILL.md` routes to by what a reader arrives holding; `skill-authoring` carries `references/bundled-scripts.md`, routed to the same way; `verifying-plugin-changes` carries `references/which-version-runs.md`, opened only to pin which plugin version a repo, session or transcript ran. `bin/plugin-craft-creation-status` is the `plugin-creation` skill's probe, a bash entry point that sources `lib/creation-status-readers.sh`, found from the script's own location through any symlinks; `dist.include` ships `bin`, `lib` and `hooks`.
 
 `plugin-dev/` is the `claude-plugin-dev` toolkit, vendored by `git subtree` at a `dist-vX.Y.Z` tag. It supplies `just release`, `resume-release`, `check-version` and `update-plugin-dev` through `release.just`, and a `PreToolUse(Write|Edit)` version-guard hook wired into `.claude/settings.json`. The directory is generated content: changes go to the toolkit repo and arrive here through `just update-plugin-dev`.
 
 `memory/` is a gitlore submodule with the shared `ddaanet` tier mounted at `memory/ddaanet/`. That tier is this plugin's source material and is shared with other repositories, so it is read for content and edited only to retire what has migrated.
 
-`justfile` imports the toolkit's recipes and defines the two the toolkit requires. `precommit` validates the plugin manifest and `hooks/hooks.json`, syntax-checks and shellchecks `scripts/`, `hooks/`, the probe and its lib, and runs `check-skill-text.sh` and the bats suites under `tests/`. `prerelease` depends on `precommit` and adds nothing yet.
+`justfile` imports the toolkit's recipes and defines the two the toolkit requires. `precommit` depends on the toolkit's `check-refs`, `check-size` and `check-frontmatter`, then validates the plugin manifest and `hooks/hooks.json`, syntax-checks and shellchecks `scripts/`, `hooks/`, the probe and its lib, and runs `check-skill-text.sh` and the bats suites under `tests/`. `check-frontmatter` parses YAML with PyYAML, which comes from the uv `.venv`: `pyproject.toml` lists `pyyaml` in its dev group, `uv sync` materializes the venv, and `.envrc` puts `.venv/bin` on PATH. `prerelease` depends on `precommit` and adds nothing yet.
 
 `scripts/check-skill-text.sh` walks `skills/**/*.md` NUL-delimited and fails on three patterns: a `[[wikilink]]`, a `memory/` path, and a bare `.md` filename matching a known source fact. Only the wikilink check skips code, since `[[ ... ]]` is bash syntax that skill prose must be able to name: it ignores code spans, which may cross a line break within a paragraph, and fenced blocks. The memory-path and filename checks read every line. The skipping is a line scanner rather than a Markdown parser, and its header states the residual bounds: block boundaries that are not blank lines can mispair a span across list items, indented code blocks are not recognised, a fence may be indented by any amount, and an unclosed fence runs to the end of the file. It prints `file:line:text` for each hit and exits non-zero.
 
@@ -66,7 +68,7 @@ A Claude Code plugin with no commands and no agents, and one hook: `hooks/hooks.
 
 **D-6 · Distributed skill text never cites the memory store, and a script enforces it.** Consumers do not have the store, so a wikilink or a `memory/` path dangles for every one of them. The criteria are inlined at write time. Review alone is insufficient because the failure is silent — the skill reads as complete with a dead pointer in it — so `check-skill-text.sh` runs from `precommit`.
 
-**D-7 · `hook-authoring` is a hub plus three reference files, and `skill-authoring` a hub plus one.** `hook-authoring`'s merged source is roughly 48 KB, past the point where one file reads as a routing document. `SKILL.md` holds what a reader needs before knowing which question they have: the control surface, the three-way deny split, and how to choose a channel. The reference files hold the mechanism. `skill-authoring` was a single file until the conditionals rule pushed it past the ~200-line hub cap; the bundled-scripts material, the largest block and the one a reader needs only when a skill must run a script, moved to `references/bundled-scripts.md`, leaving a short routing summary. The other skills are single files and do not need the hop.
+**D-7 · `hook-authoring` is a hub plus three reference files; `skill-authoring` and `verifying-plugin-changes` are a hub plus one each.** `hook-authoring`'s merged source is roughly 48 KB, past the point where one file reads as a routing document. `SKILL.md` holds what a reader needs before knowing which question they have: the control surface, the three-way deny split, and how to choose a channel. The reference files hold the mechanism. `skill-authoring` was a single file until the conditionals rule pushed it past the ~200-line hub cap; the bundled-scripts material, the largest block and the one a reader needs only when a skill must run a script, moved to `references/bundled-scripts.md`, leaving a short routing summary. `verifying-plugin-changes` went the same way when the toolkit's byte cap on a `SKILL.md` hub caught it: the per-scope pinning and lazy-release material, needed only to pin which version ran, moved to `references/which-version-runs.md`. The other skills are single files and do not need the hop.
 
 **D-8 · Migrated facts are retired from the tier; two are reduced rather than removed.** Leaving them costs index bytes against a capped loader for content now shipped in full. `hook-output-channels` kept §7 until `craft:directive-writing` took it, and was retired on 2026-09-24 once its last mechanism, ANSI rendering on `systemMessage`, landed here. `claude-plugin-dev` keeps the `edify`-does-not-vendor exception, which is in neither the vendored README nor the skill. Every inbound pointer from a fact that stays was repointed at the skill carrying the content.
 
@@ -78,31 +80,21 @@ A Claude Code plugin with no commands and no agents, and one hook: `hooks/hooks.
 
 ## Rejected alternatives
 
-**Widening `toolkit-release` to cover setup.** D-5 scopes it to failure modes, and the moment differs: setup is a route taken in order, a release failure is a symptom met mid-run.
+One line each; the argument behind each is in [references/rejected-alternatives.md](references/rejected-alternatives.md), read before re-proposing one.
 
-**Keeping the route in the `claude-plugin-dev` memory fact.** Recall fires on a token, and the session that motivated `plugin-creation` held none that matched it.
-
-**Prose only for the `claude --version` trap (D-11).** The rule was already written down and did not stop the incident; the trigger is a literal command, which suits a hook better than a skill.
-
-**A `PermissionDenied` hook for the classifier's no-verdict (FR-5).** It fires on the denial, but its `additionalContext` never reaches the model, and its `reason` reads `Classifier unavailable` rather than the text the model sees (probed on CC 2.1.311, `plans/classifier-no-verdict/probes.md`). **Reopen-if** Claude Code delivers context from that event.
-
-**Reading the version from `CLAUDE_CODE_EXECPATH`.** Undocumented, unverified inside a hook's environment, and dependent on the versioned install layout, so a different install fails silently. The transcript field is documented.
-
-**Naming it `craft:plugin-dev`.** `plugin-dev/` is the vendored toolkit directory and `plugin-dev:` is an existing skill namespace. A third meaning for the same word makes every reference ambiguous.
-
-**Shipping this content from the `claude-plugin-dev` repository.** That repo is subtree-vendored infrastructure, not a marketplace plugin. Skills are discovered from `skills/` at a plugin root, not from a consumer's `plugin-dev/`, so a skill placed there would never load.
-
-**Folding it into `craft`.** Different moment and different audience. Someone writing a design document is not building a hook, and the two sets would compete for attention in one description list.
-
-**Leaving the content in memory and splitting each body under the recall cap.** Viable for a fact keyed on a symptom string. It is wrong here because these triggers are task-shaped: no split makes an index line fire on "I am writing a hook".
-
-**A skill on `git subtree` grafting the wrong tree.** Offered from `claude-plugin-dev` (2026-09-07): `git subtree add|pull --prefix` grafts a ref's *root* tree and cannot filter, so a repository shipping from a subdirectory is unvendorable from its own release tag, and a consumer who pins one receives the whole working environment — most visibly a `memory` gitlink that makes a bare `git submodule status` fail repo-wide, and a `CLAUDE.md` and `.claude/settings.json` that silently reconfigure the agent reading them. The remedy is a second `dist-` tag cut from `git subtree split --prefix`. Declined because the vendored `plugin-dev/README.md` carries both the mechanism and that symptom and ships to every consumer of the toolkit, while `install.sh` and the update recipe already refuse a source ref by name and print the `dist-` one instead. D-5 scopes `toolkit-release` to what that README lacks, so a section here would be duplication of a file the reader already has. The residual audience is someone who installs plugin-craft and uses `git subtree` without vendoring this toolkit, which is another description's cost against N-1's test.
-
-**`exit 2` plus stderr as the deny mechanism.** It blocks, but carries no `ask` capability and no `systemMessage`, so a human-facing line distinct from the agent-facing reason is unavailable. Uniform stdout JSON with exit 0 keeps every script the same shape regardless of decision.
-
-**Treating the tier's existing `additionalContext` sentence as covering a deny.** It claimed only the weaker thing — delivery when an allowed call then fails — and a blocked call never runs, so it is not a call that failed. A hook written on that assumption works with its teaching silently dropped.
-
-**Letting review alone enforce D-6.** Rejected for the reason stated in D-6; retained here because "a careful reviewer will catch it" is the alternative that keeps suggesting itself.
+- **Widening `toolkit-release` to cover setup** — D-5 scopes it to failure modes; setup is a route, a release failure a symptom.
+- **Keeping the route in the `claude-plugin-dev` memory fact** — recall fires on a token the motivating session never held.
+- **Prose only for the `claude --version` trap (D-11)** — the written rule did not stop the incident; a literal command suits a hook.
+- **A `PermissionDenied` hook for the classifier's no-verdict (FR-5)** — its context never reaches the model. **Reopen-if** Claude Code delivers it.
+- **Reading the version from `CLAUDE_CODE_EXECPATH`** — undocumented and install-layout dependent; the transcript field is documented.
+- **Naming it `craft:plugin-dev`** — a third meaning for a word already naming the vendored directory and a skill namespace.
+- **Shipping this content from the `claude-plugin-dev` repository** — a skill under a consumer's `plugin-dev/` never loads.
+- **Folding it into `craft`** — different moment and audience; the two sets would compete in one description list.
+- **Leaving the content in memory and splitting each body under the recall cap** — task-shaped triggers never match an index line.
+- **A skill on `git subtree` grafting the wrong tree** — `plugin-dev/README.md` already ships the mechanism and symptom to every consumer (D-5).
+- **`exit 2` plus stderr as the deny mechanism** — no `ask`, no `systemMessage`; uniform stdout JSON keeps every script one shape.
+- **Treating the tier's existing `additionalContext` sentence as covering a deny** — it claimed only the allowed-then-failed case.
+- **Letting review alone enforce D-6** — the failure is silent; kept because this alternative keeps suggesting itself.
 
 ## Limitations
 
