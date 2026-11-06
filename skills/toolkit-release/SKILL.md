@@ -107,4 +107,6 @@ local clone of the source repo: `git -C <source-checkout> log
 
 The clone's tags lag the remote until fetched, so run
 `git -C <source-checkout> fetch --tags` first. That fetch writes into another
-repository, so it must run outside the command sandbox.
+repository, so it is not an agent call: print the command verbatim, with the
+real checkout path substituted, in a code block for my human partner to run in
+their own terminal, and wait before reading the log.
