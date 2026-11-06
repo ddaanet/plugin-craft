@@ -24,7 +24,7 @@ This document is a hub: it holds every conclusion, and `docs/references/` holds 
 
 **FR-7 · No shipped skill text cites the memory store.** No wikilink, no `memory/` path, no bare fact filename. *Done* — `scripts/check-skill-text.sh`, pinned by `just precommit`.
 
-**FR-8 · Every date and build version that grounds a claim survives the move.** Stripping one turns evidence into assertion, and these are the claims most likely to rot. *Done (prose)* — all eight skill files.
+**FR-8 · Every date and build version that grounds a claim survives the move.** Stripping one turns evidence into assertion, and these are the claims most likely to rot. *Done (prose)* — every skill file.
 
 **FR-9 · Migrated facts are retired from the tier, and inbound pointers are repointed.** Every pointer into a retired fact, from a fact that stays, names the skill that now carries the content. *Done (prose)* — `memory/MEMORY.md` and the `ddaanet` tier.
 
@@ -114,4 +114,4 @@ One line each; the argument behind each is in [references/rejected-alternatives.
 
 ## History
 
-Git history is the record of change: the why of a design-significant change goes in the commit body or into this document, and no changelog is kept beside it.
+Git history is the record of change: the why of a design-significant change goes in the commit body or into this document and its `docs/references/` nodes, and no changelog is kept beside it.

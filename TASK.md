@@ -1,3 +1,3 @@
 ## Current task
 
-The inbox is triaged and empty: the vendored toolkit is at 0.15.0, the changelog is retired, toolkit-release reads migration notes, plugin-creation registers a new repo in owned-projects, verifying-plugin-changes is under the hub cap, and precommit runs check-size and check-frontmatter with a venv for PyYAML. Every commit since the toolkit pull is reviewed at medium with no open high or medium finding, and the full gate passed inside the macOS command sandbox. The first action is to run /release-ritual to release dev onto main.
+dev is released onto main through /release-ritual (simplify made no edits; the Fable, Codex astra, skill-reviewer and plugin-validator release reviews were triaged, their high and medium findings fixed, and the medium pass over the fixes returned only lows). The one open item is the missing LICENSE file in TODO.md, which waits on my human partner.
