@@ -7,7 +7,7 @@ _default:
     @just --list
 
 # Checks that run before every commit.
-precommit: check-refs check-size check-frontmatter
+precommit: check-refs check-size check-frontmatter check-modes
     jq . .claude-plugin/plugin.json > /dev/null
     for f in scripts/*.sh hooks/*.sh lib/*.sh bin/plugin-craft-creation-status; do bash -n "$f" || exit 1; done
     shellcheck scripts/*.sh hooks/*.sh
