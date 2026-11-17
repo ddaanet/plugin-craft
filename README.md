@@ -42,7 +42,9 @@ in a reference file behind the hub.
 the code you just edited: which reload path refreshes a skill body, a hook, a
 manifest. It fires on a symptom with no keyword — an edit that appears not to
 work while nothing errors — which is exactly the trigger a memory index line
-could never match.
+could never match. A symptom table routes the loading failures that do print
+something, such as `Agent type not found` or an edit under a loaded plugin
+prompting as a sensitive file.
 
 **`toolkit-release`** — what goes wrong when releasing a plugin with the
 vendored `claude-plugin-dev` toolkit: why `just release` must run unsandboxed,
@@ -58,7 +60,8 @@ working plugin in the decided order: gitlore memory, then
 its dogfood launcher. A read-only script, `plugin-craft-creation-status`,
 reports the first missing step and who acts on it; the skill body keeps the
 judgement and routes away from a hand-rolled `--plugin-dir` launch to the
-dogfood route.
+dogfood route. A reference covers an install aborting on a submodule clone and
+a plugin setting rejected as an unrecognized key.
 
 ## The hook
 

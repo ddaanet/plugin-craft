@@ -42,6 +42,11 @@ slugs="$slugs|cc-subagent-approval|test-the-invocation-path|cc-agent-discovery"
 slugs="$slugs|sessionstart-resume-cwd|cc-command-namespacing|directive-states-acts"
 slugs="$slugs|cc-worktree-memory-freeze|green-is-not-evidence"
 slugs="$slugs|plugin-agent-hooks-ignored|plugin-hook-fail-open"
+slugs="$slugs|cc-plugin-dir-edits-sensitive|cc-plugin-dirs-env-var"
+slugs="$slugs|plugin-recurse-clone|project-hooks-launch-dir|cc-rules-paths-loading"
+slugs="$slugs|settings-json-unknown-field-validator"
+slugs="$slugs|subagent-skips-at-import-expansion"
+slugs="$slugs|verify-restart-before-structural-diagnosis"
 
 # Checked on every line, code included. The wikilink pattern is in the awk
 # program below, since it applies to the line with code removed.

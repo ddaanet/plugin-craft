@@ -17,3 +17,59 @@ checkout, or without `--plugin-dir`: ask the user to relaunch that way, since
 only the user can. Meanwhile, as the error says, continue with work that does
 not need the write; if the write is essential, stop and tell the user. Do not
 look for another way to write the file.
+
+## Every path under an inline plugin root is sensitive
+
+Verified by reading the CC 2.1.283 bundle. An inline plugin root is a
+`--plugin-dir` or `--plugin-dir-no-mcp` argument or a `CLAUDE_CODE_PLUGIN_DIRS`
+entry, and every path under one is a sensitive file for `Write`, `Edit` and
+`NotebookEdit`. The Edit/Write permission function runs its path safety check
+(`checkPathSafetyForAutoEdit`) before the acceptEdits auto-allow and before
+settings allow rules, and that check returns `ask` for an inline root. So:
+
+- Under acceptEdits each edit still prompts, with `which is a sensitive file`
+  and often no reason shown.
+- An `Edit(/plugin/**)` allow rule in any settings scope is never consulted.
+  Only session rules rooted at `/.claude/**` or `~/.claude/**` are checked
+  earlier.
+- Subagents hit it too: the inline-root list is session-wide.
+- The directory's name plays no part and no list contains `plugin`: what flags
+  the path is that it is loaded. Renaming the directory does nothing.
+- Paths with a `.claude` segment, such as a `<dir>/.claude/skills` symlink
+  spelling, are flagged separately, loaded or not.
+
+When edits to a plugin tree prompt despite allow rules, check the launch for
+`--plugin-dir` first (a `.bin/claude` shim, a `just claude` recipe) before
+touching permissions. The fix is the one above: load a synced copy and edit the
+source tree, or relaunch without the flag.
+
+## Auto mode: `classifier gave no verdict (it skipped this action)`
+
+In auto mode the same edits can come back as `The server-side auto mode
+classifier gave no verdict (it skipped this action)`. That this is the same
+flag seen server-side is inferred, not verified. It is a symptom of its own,
+apart from the hard-failure text in the scope paragraph at the top: read the
+whole message, and if it carries `This is a hard failure` follow that text;
+otherwise the cause to check is the inline root, and the fix is the synced
+copy.
+
+## `CLAUDE_CODE_PLUGIN_DIRS`
+
+The variable loads a plugin through the environment instead of a flag, and
+carries the same edit sensitivity. Verified by reading the CC 2.1.283 bundle.
+
+- **Format.** It is split on `path.delimiter` (`:` on Unix), each entry
+  trimmed, and an entry is kept only if it is an absolute local path. A
+  relative, `~`-prefixed or network entry is dropped with `CLAUDE_CODE_PLUGIN_DIRS:
+  skipped …: a plugin folder here is an absolute local path or starts with ~`;
+  the wording reads inverted, the filter keeps absolute paths. It can also come
+  from a settings `env` block.
+- **Inheritance.** Claude Code re-sets the variable in its own environment to
+  the normalized list, so hooks and child processes (a nested `claude`) see it,
+  unlike a `--plugin-dir` flag. A launcher shim that exports it can therefore
+  be checked from a `SessionStart` hook, and a relaunch spawned from inside the
+  process keeps it.
+- **Symlinks do not escape.** The roots and the edited path both go through
+  `fs.realpathSync.native`, walking up to the nearest existing ancestor,
+  before the is-under test. A symlinked root flags the tree it points to, so
+  editing without the prompts needs a real copy.
