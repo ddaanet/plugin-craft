@@ -93,7 +93,11 @@ that fires *inside* a turn. Verified 2026-07-31 on 2.1.220 by nested `claude -p`
 runs. There is no context percentage or window size on any payload, so context
 size comes from the transcript: on the newest entry carrying `.message.usage`,
 `input_tokens + cache_creation_input_tokens + cache_read_input_tokens` is the
-prompt sent for that call (accurate after a compaction). Take the *last* such
+prompt sent for that call. The newest such entry on disk is the previous call's,
+so across a compaction it measures the discarded context: count only entries
+newer than the last `isCompactSummary`, and report nothing when none is
+([../../session-transcripts/references/entry-shapes.md](../../session-transcripts/references/entry-shapes.md),
+Compaction). Take the *last* such
 entry rather than summing — one API response emits several JSONL entries sharing
 a `message.id`, each repeating the same `usage`. Inside a subagent
 `transcript_path` points at the **parent**; the subagent's own usage is at
@@ -140,8 +144,9 @@ samples an environment fact once at `SessionStart` and parks it samples it at
 the one moment the cwd does not belong to the session, and the wrong value
 stays silent until a consumer refuses. Two hooks in one session naming
 different repos is the signature, and it is legitimate rather than a race.
-Resolve per call, in the hook that needs the value, from that hook's own payload
-`cwd`; a value the agent's Bash needs is injected at call time with
+Resolve per call, in the hook that needs the value, starting from that call's
+own payload rather than a parked sample, and derive a root from it as the next
+paragraph says; a value the agent's Bash needs is injected at call time with
 `PreToolUse` and `updatedInput`, as
 `../../skill-authoring/references/bundled-scripts.md` describes. This differs
 from cwd drift, where the session leaves its launch repo and the per-call
