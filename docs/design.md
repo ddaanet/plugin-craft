@@ -10,7 +10,7 @@ This document is a hub: it holds every conclusion, and `docs/references/` holds 
 
 ## Functional requirements
 
-**FR-1 · One plugin, five skills and one hook, each firing on a moment.** Every skill description names a moment a session is already in rather than a topic word; the hook fires on the one moment with a mechanical trigger, `claude --version` (D-11). *Done (prose)* for the skills — the `description:` of each `skills/*/SKILL.md`; *Done* for the hook — `hooks/hooks.json`, its matcher and annotation pinned by `tests/claude-version-hook.bats` and its cost on long commands by `tests/claude-version-hook-cost.bats`.
+**FR-1 · One plugin, six skills and one hook, each firing on a moment.** Every skill description names a moment a session is already in rather than a topic word; the hook fires on the one moment with a mechanical trigger, `claude --version` (D-11). *Done (prose)* for the skills — the `description:` of each `skills/*/SKILL.md`; *Done* for the hook — `hooks/hooks.json`, its matcher and annotation pinned by `tests/claude-version-hook.bats` and its cost on long commands by `tests/claude-version-hook-cost.bats`.
 
 **FR-2 · `hook-authoring` carries the whole hook surface.** The stdin payload, the stdout control surface, the channel mechanics, the `PreToolUse` permission pipeline, the scripted-harness comparison, containing a plugin's own agents, whose frontmatter hooks are dropped, and mods, a plugin's JS/TS hooks module. *Done (prose)* — `skills/hook-authoring/`.
 
@@ -32,6 +32,8 @@ This document is a hub: it holds every conclusion, and `docs/references/` holds 
 
 **FR-11 · The route's state is read by `bin/plugin-craft-creation-status`.** One line per check and a `next` line. The inspected repository is not written to; the python check makes temp files and runs that repository's own `plugin-dev/dist.sh`. The file-format readers it sources live in `lib/creation-status-readers.sh`, outside `bin/` so they stay off PATH. *Done* — pinned by `tests/plugin-craft-creation-status.bats` in `precommit`.
 
+**FR-12 · `session-transcripts` carries reading a session JSONL correctly.** The structural flags to key on, one message spanning several entries, where sub-agent transcripts live, how slash commands and skills are recorded, the two guards a line reader needs and finding a transcript by session id, behind a symptom table. *Done (prose)* — `skills/session-transcripts/`.
+
 ## Non-functional requirements
 
 **NFR-1 · A description is a recurring cost.** It is injected at session start in every repo where the plugin is enabled, not merely displayed, so its length is paid per session and is written to earn it. *Done (prose)* — the frontmatter of each `skills/*/SKILL.md`.
@@ -44,7 +46,7 @@ This document is a hub: it holds every conclusion, and `docs/references/` holds 
 
 ## Architecture
 
-A Claude Code plugin with no commands and no agents, and one hook: `hooks/hooks.json` registers a `PostToolUse` hook on `Bash` that runs `hooks/claude-version.sh`, with two helpers beside it, `running-version.sh` and `is-claude-version-call.sh`. Five skills under `skills/`, discovered from the plugin root; `hook-authoring` additionally carries `references/output-channels.md`, `references/input-and-harness.md`, `references/plugin-agent-containment.md` and `references/mods.md`, which its `SKILL.md` routes to by what a reader arrives holding; `skill-authoring` carries `references/bundled-scripts.md`, routed to the same way; `verifying-plugin-changes` carries `references/which-version-runs.md`, opened only to pin which plugin version a repo, session or transcript ran, `references/plugin-dir-edits.md` for edits under a loaded plugin root, and `references/loading-symptoms.md`, a symptom table for what fails to load; `plugin-creation` carries `references/install-and-config.md`. `bin/plugin-craft-creation-status` is the `plugin-creation` skill's probe, a bash entry point that sources `lib/creation-status-readers.sh`, found from the script's own location through any symlinks; `dist.include` ships `bin`, `lib` and `hooks`.
+A Claude Code plugin with no commands and no agents, and one hook: `hooks/hooks.json` registers a `PostToolUse` hook on `Bash` that runs `hooks/claude-version.sh`, with two helpers beside it, `running-version.sh` and `is-claude-version-call.sh`. Six skills under `skills/`, discovered from the plugin root; `hook-authoring` additionally carries `references/output-channels.md`, `references/input-and-harness.md`, `references/plugin-agent-containment.md` and `references/mods.md`, which its `SKILL.md` routes to by what a reader arrives holding; `skill-authoring` carries `references/bundled-scripts.md`, routed to the same way; `verifying-plugin-changes` carries `references/which-version-runs.md`, opened only to pin which plugin version a repo, session or transcript ran, `references/plugin-dir-edits.md` for edits under a loaded plugin root, and `references/loading-symptoms.md`, a symptom table for what fails to load; `plugin-creation` carries `references/install-and-config.md`; `session-transcripts` carries `references/entry-shapes.md`, `references/locating.md` and `references/reader-guards.md` behind a symptom-table hub. `bin/plugin-craft-creation-status` is the `plugin-creation` skill's probe, a bash entry point that sources `lib/creation-status-readers.sh`, found from the script's own location through any symlinks; `dist.include` ships `bin`, `lib` and `hooks`.
 
 `plugin-dev/` is the `claude-plugin-dev` toolkit, vendored by `git subtree` at a `dist-vX.Y.Z` tag. It supplies `just release`, `resume-release`, `check-version` and `update-plugin-dev` through `release.just`, and a `PreToolUse(Write|Edit)` version-guard hook wired into `.claude/settings.json`. The directory is generated content: changes go to the toolkit repo and arrive here through `just update-plugin-dev`.
 
@@ -56,7 +58,7 @@ A Claude Code plugin with no commands and no agents, and one hook: `hooks/hooks.
 
 ## Design decisions
 
-**D-1 · Five skills, one plugin.** Context cost is per-skill, since every enabled skill's `description:` is injected at session start and counted under `/context`'s *Skills*. Packaging is therefore neutral on cost, and the plugin boundary is an enablement decision instead. These five share one moment — setting up a repository to build on the harness, building on it, or debugging it.
+**D-1 · Six skills, one plugin.** Context cost is per-skill, since every enabled skill's `description:` is injected at session start and counted under `/context`'s *Skills*. Packaging is therefore neutral on cost, and the plugin boundary is an enablement decision instead. These six share one moment — setting up a repository to build on the harness, building on it, or debugging it, reading its transcripts included.
 
 **D-2 · `hook-output-channels` splits at §7.** Sections 1–6 are hook mechanism and belong with the skill; §7 is prose craft, and the source file scopes its own rule to "DENY channels, not DIRECTIVE channels", which is a wording rule rather than a mechanism. §7 stays in the tier for the sibling `craft` extraction. **Reopen-if** `craft` declines the section.
 

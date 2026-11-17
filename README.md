@@ -1,10 +1,10 @@
 # plugin-craft
 
 Building on the Claude Code harness: setting up a plugin repository, authoring
-and debugging hooks, writing skills, and verifying that the plugin code
-actually running is the code you just edited.
+and debugging hooks, writing skills, reading session transcripts, and verifying
+that the plugin code actually running is the code you just edited.
 
-Five skills and one small hook (below), each firing on a moment you are already
+Six skills and one small hook (below), each firing on a moment you are already
 in rather than on a topic word you have to think to type. They were cut from a
 shared memory tier because recall delivers only the first 4KB of a fact and
 stops — most of each body was unreachable by the mechanism meant to reach it. A
@@ -62,6 +62,13 @@ reports the first missing step and who acts on it; the skill body keeps the
 judgement and routes away from a hand-rolled `--plugin-dir` launch to the
 dogfood route. A reference covers an install aborting on a submodule clone and
 a plugin setting rejected as an unrecognized key.
+
+**`session-transcripts`** — reading a Claude Code session JSONL correctly: the
+structural flags to key on rather than content, one assistant message spanning
+several entries, where sub-agent transcripts live, how slash commands and
+skills are recorded, the guards a line-by-line reader needs, and finding a
+transcript by session id. A symptom table routes a 0% batching count, a token
+reading far too high after a compaction or a `jq` exit 5 to its cause.
 
 ## The hook
 

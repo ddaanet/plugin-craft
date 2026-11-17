@@ -49,6 +49,9 @@ slugs="$slugs|subagent-skips-at-import-expansion"
 slugs="$slugs|verify-restart-before-structural-diagnosis"
 slugs="$slugs|frontmatter-hooks-trust-key-exact|session-title-customtitle"
 slugs="$slugs|cc-mods-api|cc-mods-driving-commands"
+slugs="$slugs|session-jsonl-schema|jsonl-sidechain-segregation"
+slugs="$slugs|jsonl-slash-command-shape|jsonl-reader-type-guard"
+slugs="$slugs|cc-project-dir-encoding|jq-index-bytes-vs-slice-codepoints"
 
 # Checked on every line, code included. The wikilink pattern is in the awk
 # program below, since it applies to the line with code removed.
