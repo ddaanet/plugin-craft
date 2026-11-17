@@ -1,0 +1,5 @@
+# The `claude --version` hook (D-11)
+
+The mechanism behind D-11 in [../design.md](../design.md).
+
+The hook runs on `PostToolUse` for `Bash`, takes the installed version from the call's own `tool_response.stdout`, takes the running version from the last non-null `version` in `transcript_path` (the final transcript line often has none, so the last line is not enough), and speaks only on a mismatch, through `additionalContext` alone. It matches the program word `claude` with `--version` or `-v`, not a substring, so `echo "claude --version"` stays quiet. The matcher is a portable `awk` tokenizer making a single pass over the command (it replaced a bash loop whose cost grew with the square of the command's length): besides quotes it treats an unquoted `#` at word start as a comment to end of line and removes backslash-newline continuations. `hooks/hooks.json` gives the hook a 5-second timeout. It is bash plus `jq`, as the existing scripts are, and lives in `hooks/` because `scripts/` does not ship.
