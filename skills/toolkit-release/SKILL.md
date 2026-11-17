@@ -86,8 +86,9 @@ marketplace repo means for a run that already got that far — so read it rather
 than reconstructing the rule. From toolkit 0.11.0 the only exemption is a
 gitlore memory submodule. Any other tracked path that differs from HEAD, staged
 or not, refuses the release, `.claude/settings.json` included: the release
-commit takes the whole index, so the check keeps it to the version bump.
-Commit such a change first; untracked and gitignored files are not checked.
+commit takes the whole index, so the check keeps everything but the version
+bump and the memory gitlink out of it. Commit or stash such a change first;
+untracked and gitignored files are not checked.
 
 ## Check `just --list` after a subtree pull
 
