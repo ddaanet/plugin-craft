@@ -70,7 +70,10 @@ body can exceed 100 KB.
 `isMeta:true` is the robust flag for all harness-injected non-conversation
 content: skill bodies, `<local-command-caveat>`, and `## Context` or
 `## Context Usage` injections. Genuine user prompts never carry it. Verified
-across 20+ real transcripts 2026-05-23.
+across 20+ real transcripts 2026-05-23. The compact summary is the exception:
+a harness-written `type:"user"` entry without `isMeta` (see Compaction), so a
+filter selecting genuine prompts excludes `isCompactSummary: true` as well as
+`isMeta: true`.
 
 ## `/compact` records twice
 

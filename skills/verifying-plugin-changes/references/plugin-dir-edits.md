@@ -45,13 +45,16 @@ source tree, or relaunch without the flag.
 
 ## Auto mode: `classifier gave no verdict (it skipped this action)`
 
-In auto mode the same edits can come back as `The server-side auto mode
-classifier gave no verdict (it skipped this action)`. That this is the same
-flag seen server-side is inferred, not verified. It is a symptom of its own,
-apart from the hard-failure text in the scope paragraph at the top: read the
-whole message, and if it carries `This is a hard failure` follow that text;
-otherwise the cause to check is the inline root, and the fix is the synced
-copy.
+`(it skipped this action)` names the reason inside the message, not a symptom
+of its own: it is the `server_call_skipped` reason, which the hard-failure text
+carries, and the same reason has a one-retry variant when the classifier
+expected the call not to need a review (read in the CC 2.1.310 bundle). Act on
+the rest of the message as the scope paragraph says: with `This is a hard
+failure`, follow it, and the fix is the synced copy above; with a one-retry
+text, retry once. A `Write` under a `--plugin-dir` directory got the
+hard-failure text with this reason on its first attempt (CC 2.1.311, one run).
+That the inline-root path check is what the server reports as this reason is
+inferred, not verified.
 
 ## `CLAUDE_CODE_PLUGIN_DIRS`
 

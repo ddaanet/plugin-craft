@@ -55,9 +55,11 @@ path. Undocumented officially; verified against the bundled JS in the
 not-planned). Treat the rule as stable but reverse-engineered.
 
 1. `realpath()`, then Unicode NFC normalize.
-2. Replace every byte not in `[A-Za-z0-9]` with `-`. A leading `/` becomes a
-   leading `-`; `.`, `_`, spaces and non-ASCII all become `-`. Case is
-   preserved. Consecutive specials accumulate: `/.foo` becomes `--foo`.
+2. Replace every UTF-16 code unit not in `[A-Za-z0-9]` with `-` (a JS regex
+   without the `u` flag). A leading `/` becomes a leading `-`; `.`, `_`,
+   spaces and non-ASCII all become `-`: one `-` for `é`, two for a character
+   outside the BMP such as an emoji. Case is preserved. Consecutive specials
+   accumulate: `/.foo` becomes `--foo`.
 3. If the result exceeds 200 characters, truncate to 200 and append
    `-<base36(abs(hash(path)))>`. The hash is not visible from strings in the
    bundle, and no path tried has reached this branch (not probed).
@@ -67,10 +69,19 @@ Verified examples: `/Users/me/code/proj` becomes `-Users-me-code-proj`;
 `/Users/me/code/x/.test-install-XXXX` becomes
 `-Users-me-code-x--test-install-XXXX`.
 
-A shell one-liner matching the common case (not the over-200 fallback):
+A shell one-liner for an ASCII path (not the over-200 fallback); on a
+non-ASCII path it emits one `-` per byte, so `/a/é` gives `-a---` where
+Claude Code has `-a--`:
 
 ```sh
 printf '%s' "$abs_path" | LC_ALL=C sed 's/[^A-Za-z0-9]/-/g'
+```
+
+For any path, apply the bundle's own steps in node (again not the over-200
+fallback):
+
+```sh
+node -e 'process.stdout.write(require("fs").realpathSync(process.argv[1]).normalize("NFC").replace(/[^a-zA-Z0-9]/g, "-"))' "$abs_path"
 ```
 
 A hand-rolled `rstrip("/").replace("/", "-")` is incomplete: it misses any

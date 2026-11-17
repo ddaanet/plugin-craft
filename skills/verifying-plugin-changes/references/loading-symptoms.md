@@ -18,7 +18,7 @@ are in the hub.
 
 A plugin's `agents/<name>.md` is not discovered from the working directory
 alone. The plugin has to be reachable by a marketplace install
-(`/plugin install <name>@<scope>` or `enabledPlugins`) or by `--plugin-dir`.
+(`/plugin install <plugin>@<marketplace>` or `enabledPlugins`) or by `--plugin-dir`.
 Either way the dispatch name is `<plugin>:<agent>`, never the bare agent name.
 Confirmed 2026-05-22 in a `--plugin-dir` session: `subagent_type:
 "memory-merger"` returned `Agent type not found`, `"gitlore:memory-merger"`
@@ -91,15 +91,14 @@ repository, so a rules file adds no validator finding.
 
 ## A subagent reports an import missing
 
-An Agent-tool subagent's `claudeMd` block carries the literal contents of
-`CLAUDE.md` files but does not expand `@path/to/file` import lines the way a
-fresh top-level session does. Asked whether an import resolved, it reports the
-imported file absent even when the import is written correctly. Confirmed
-2026-08-11: after adding `@docs/shared.md` as the last line of
-a project `CLAUDE.md`, a subagent reported the file's contents missing, while
-`claude -p` from the same directory showed the import resolved. Verify an
-import with `claude -p '...'` from the target directory, or ask the user to
-start a session; a subagent's negative is no evidence the import is broken.
+On CC 2.1.326 an Agent-tool subagent receives `CLAUDE.md` `@path/to/file`
+imports expanded, as a top-level session does, so its report of a missing
+import is evidence the import does not resolve. An earlier version did not
+expand them: on 2026-08-11, after `@docs/shared.md` was added as the last line
+of a project `CLAUDE.md`, a subagent reported the file's contents missing while
+`claude -p` from the same directory showed the import resolved. Confirm a
+missing import with `claude -p '...'` from the target directory before
+changing the import line.
 
 ## Restart before a structural diagnosis
 

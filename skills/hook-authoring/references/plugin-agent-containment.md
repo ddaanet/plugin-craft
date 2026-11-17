@@ -92,7 +92,8 @@ is calling.
 
 | Failure | Identified agent | Any other caller |
 | --- | --- | --- |
-| Payload does not parse; `agent_type` absent, not a string or not the hook's agent | n/a: not identified | exit 0, silent |
+| Payload empty (read failed, §4) | n/a: not identified | exit 1 and one stderr line |
+| Payload non-empty but does not parse; `agent_type` absent, not a string or not the hook's agent | n/a: not identified | exit 0, silent |
 | Interpreter missing or exits other than 0 or 2 (not a signal death, row below); module missing or unreadable (test readability first: python3 exits 2 on a script it cannot open, which reads as a block) | exit 2, reason on stderr | exit 0, silent |
 | Interpreter killed by a signal (status above 128; an OOM kill is 137) | exit 2 | exit 1 and one stderr line: a visible hook error that blocks nothing |
 | `tool_input` missing or mistyped, no project directory, any exception in the module | exit 2, reason on stderr | not reached |

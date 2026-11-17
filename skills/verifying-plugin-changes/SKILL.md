@@ -21,8 +21,10 @@ Even after a refresh, only a *new* session picks it up — agent definitions in
 particular are cached at session start.
 
 **Fix:** ship via a **version bump**, not just a push. To develop against current
-`main`, load with `--plugin-dir` or, with the toolkit vendored, through its dogfood
-launcher, instead of the cache.
+`main`, load the plugin through the toolkit's dogfood launcher instead of the
+cache. `--plugin-dir` serves only a session that edits nothing in the loaded
+tree: every edit under it prompts or fails, see
+[references/plugin-dir-edits.md](references/plugin-dir-edits.md).
 
 The newest directory in the cache is not necessarily what runs: installs are
 pinned per scope, and a release reaches each project lazily. Open
@@ -110,7 +112,7 @@ The split that makes this confusing:
 
 Signature: a hook that looks dead for no reason right after moving it to a
 different event. It isn't dead; it's being called on the old event with the old
-payload shape. **Don't debug the script — start a new session.**
+payload shape. **Don't debug the script — exit and relaunch with `claude -c`** (below).
 
 Corollary for probing: a hook-*logic* change can be tested in the session that
 makes it, never a hook-*event* change. Routing the test through

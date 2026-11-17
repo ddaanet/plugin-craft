@@ -13,7 +13,7 @@ it.
 
 ## A relative or local-only submodule url
 
-`/plugin install <name>@<scope>` clones the plugin's GitHub repository with
+`/plugin install <plugin>@<marketplace>` clones the plugin's GitHub repository with
 `git clone --recurse-submodules`, so every submodule committed there is cloned
 into each installer's `~/.claude/plugins/cache/...`. A relative or local-only
 submodule url breaks that: gitlore committed `.gitmodules` with
@@ -25,16 +25,15 @@ dogfood could not catch it, because `--plugin-dir` does not recurse-clone.
 
 A distributable plugin repository with a self-hosted submodule needs:
 
-- an absolute `.gitmodules` url with a real scheme (`https://`, `git@...`,
-  `ssh://`); prefer https so anonymous installers can read a public repository
-  without SSH keys;
+- an absolute `https://` `.gitmodules` url, since an installer without the
+  owner's SSH keys cannot clone an SSH one (layer 2 below);
 - the recorded gitlink sha pushed and fetchable on that remote;
 - a public submodule remote, since a private one lets install work only for
   those with access.
 
 The local-only placeholder still applies to user installs in a target
 repository; only the plugin repository's own submodule needs a real remote. A
-regression guard is a test asserting the submodule url is an absolute scheme.
+regression guard is a test asserting the submodule url is `https://`.
 
 ## Three layers abort an install without the owner's access
 
