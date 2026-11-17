@@ -57,11 +57,12 @@ not help, since that route is itself subject to the same validation.
 
 ## The push-route check has a stated gap
 
-`common_preflight` refuses when `remote.origin.pushurl`,
-`branch.<name>.pushRemote` or `remote.pushDefault` is set, because each sends
-the push somewhere `git ls-remote origin` does not read. A
-`url.<base>.pushInsteadOf` rewrite produces the same split and is **not**
-checked: the release publishes to the rewritten repository while every probe
+`common_preflight` refuses when `remote.origin.pushurl` is set, because it
+sends every `git push origin` somewhere `git ls-remote origin` does not read.
+It does not check `branch.<name>.pushRemote` or `remote.pushDefault`: each
+picks the remote only for an unqualified `git push`, and every push the
+release runs names origin and a refspec. A `url.<base>.pushInsteadOf` rewrite
+does split the push from the probes and is **not** checked either: the release publishes to the rewritten repository while every probe
 reads the original. Checking it was declined deliberately — the rewrite fires
 only when its base prefixes origin's URL, a non-matching base is inert, and a
 global rewrite is an ordinary thing to have configured, so refusing on presence

@@ -1,10 +1,10 @@
 # plugin-craft
 
 Building on the Claude Code harness: setting up a plugin repository, authoring
-and debugging hooks, writing skills, and verifying that the plugin code
-actually running is the code you just edited.
+and debugging hooks, writing skills, reading session transcripts, and verifying
+that the plugin code actually running is the code you just edited.
 
-Five skills and one small hook (below), each firing on a moment you are already
+Six skills and one small hook (below), each firing on a moment you are already
 in rather than on a topic word you have to think to type. They were cut from a
 shared memory tier because recall delivers only the first 4KB of a fact and
 stops — most of each body was unreachable by the mechanism meant to reach it. A
@@ -24,23 +24,27 @@ each, the `PreToolUse` permission pipeline. It teaches a deny as splitting three
 ways by audience — the verdict on `permissionDecisionReason`, the recovery on
 `additionalContext`, one line on `systemMessage` — because `additionalContext`
 is delivered on a deny, not only when an allowed call then fails, and a blocked
-call never runs. Three reference files sit behind it, routed to by what you
+call never runs. Four reference files sit behind it, routed to by what you
 arrive holding; one covers containing a plugin's own agents, whose frontmatter
-hooks Claude Code drops.
+hooks Claude Code drops, and one covers mods, a plugin's JS/TS hooks module.
 
 **`skill-authoring`** — what makes a skill findable and self-sufficient:
 description shape and its per-session cost, what `allowed-tools` grants, which
 second-person forms the imperative rule targets, and how a bundled script is
 reached when the plugin environment variables are absent. It also covers
 keeping out of agent-facing text, a skill body or a hook's `additionalContext`,
-any conditional a script could have decided. The bundled-script material sits
+any conditional a script could have decided, when a self-triggering skill
+beats a command, and routing a plugin action by what a denial would cost. The
+bundled-script material sits
 in a reference file behind the hub.
 
 **`verifying-plugin-changes`** — confirming the plugin code actually running is
 the code you just edited: which reload path refreshes a skill body, a hook, a
 manifest. It fires on a symptom with no keyword — an edit that appears not to
 work while nothing errors — which is exactly the trigger a memory index line
-could never match.
+could never match. A symptom table routes the loading failures that do print
+something, such as `Agent type not found` or an edit under a loaded plugin
+prompting as a sensitive file.
 
 **`toolkit-release`** — what goes wrong when releasing a plugin with the
 vendored `claude-plugin-dev` toolkit: why `just release` must run unsandboxed,
@@ -56,7 +60,15 @@ working plugin in the decided order: gitlore memory, then
 its dogfood launcher. A read-only script, `plugin-craft-creation-status`,
 reports the first missing step and who acts on it; the skill body keeps the
 judgement and routes away from a hand-rolled `--plugin-dir` launch to the
-dogfood route.
+dogfood route. A reference covers an install aborting on a submodule clone and
+a plugin setting rejected as an unrecognized key.
+
+**`session-transcripts`** — reading a Claude Code session JSONL correctly: the
+structural flags to key on rather than content, one assistant message spanning
+several entries, where sub-agent transcripts live, how slash commands and
+skills are recorded, the guards a line-by-line reader needs, and finding a
+transcript by session id. A symptom table routes a 0% batching count, a token
+reading far too high after a compaction or a `jq` exit 5 to its cause.
 
 ## The hook
 

@@ -1,6 +1,6 @@
 ---
 name: verifying-plugin-changes
-description: "Confirm that the plugin code actually running is the code you just edited — which reload path refreshes a skill body, a hook registration, a command or a bundled script, and which silently does not, since nothing errors when it does not. Use when an edited hook does not fire, a skill injects its pre-edit body, a command is missing or double-prefixed, `/plugin update` changes nothing, or a file write fails with `auto mode classifier gave no verdict` ... `hard failure` — and before trusting any verification of an edit to plugin code. Not a guide to writing plugins."
+description: "Confirm that the plugin code actually running is the code you just edited — which reload path refreshes a skill body, a hook registration, a command or a bundled script, and which silently does not, since nothing errors when it does not. Use when an edited hook does not fire, a skill injects its pre-edit body, a command is missing or double-prefixed, an agent type is not found, a project hook is silent from a subdirectory launch, a rules file does not load, `/plugin update` changes nothing, an edit under a loaded plugin prompts as a sensitive file, or a file write fails with `auto mode classifier gave no verdict` ... `hard failure` — and before trusting any verification of an edit to plugin code. Not a guide to writing plugins."
 ---
 
 # Verifying plugin changes
@@ -21,8 +21,13 @@ Even after a refresh, only a *new* session picks it up — agent definitions in
 particular are cached at session start.
 
 **Fix:** ship via a **version bump**, not just a push. To develop against current
-`main`, load with `--plugin-dir` or, with the toolkit vendored, through its dogfood
-launcher, instead of the cache.
+`main` with the toolkit vendored, load the plugin through its dogfood launcher
+instead of the cache. The launcher loads a copy, not the checkout, and only
+`just dogfood` refreshes it: on that route run `just dogfood` after each edit,
+before any reload or relaunch below can pick the edit up. `--plugin-dir` serves
+only a session that edits nothing in the loaded tree: every edit under it
+prompts or fails. Without the toolkit, relaunch without `--plugin-dir` to edit,
+see [references/plugin-dir-edits.md](references/plugin-dir-edits.md).
 
 The newest directory in the cache is not necessarily what runs: installs are
 pinned per scope, and a release reaches each project lazily. Open
@@ -110,7 +115,7 @@ The split that makes this confusing:
 
 Signature: a hook that looks dead for no reason right after moving it to a
 different event. It isn't dead; it's being called on the old event with the old
-payload shape. **Don't debug the script — start a new session.**
+payload shape. **Don't debug the script — exit and relaunch with `claude -c`** (below).
 
 Corollary for probing: a hook-*logic* change can be tested in the session that
 makes it, never a hook-*event* change. Routing the test through
@@ -145,17 +150,14 @@ For what a hook's stdout can do once it is the code you meant to run, see
 
 ## A file write fails with "classifier gave no verdict" under `--plugin-dir`
 
-Scope: the hard-failure text only — `auto mode classifier gave no verdict`,
-then `This is a hard failure` and `Don't retry it`. The transient and
-one-retry texts say to retry once; do that instead. A denial, where the
-classifier judged the action and blocked it saying why, is a different
-failure, and no route around it is sanctioned.
+The cause, the scope of the hard-failure text and what to do instead are in
+[references/plugin-dir-edits.md](references/plugin-dir-edits.md), which also
+covers the `which is a sensitive file` prompt and `CLAUDE_CODE_PLUGIN_DIRS`.
 
-Cause: `--plugin-dir` marks the loaded directory's content sensitive on
-purpose, so `Write`, `Edit` and `NotebookEdit` there all get the hard failure,
-and retrying repeats the answer. Fix: relaunch with the plugin loaded through
-the toolkit's dogfood launcher, which loads a synced copy rather than the
-checkout, or without `--plugin-dir`: ask the user to relaunch that way, since
-only the user can. Meanwhile, as the error says, continue with work that does
-not need the write; if the write is essential, stop and tell the user. Do not
-look for another way to write the file.
+## Something does not load, and nothing reports why
+
+`Agent type not found`, a doubled command prefix, a silent project hook, a
+rules file that stays unread, a subagent missing an `@` import: the symptom
+table in [references/loading-symptoms.md](references/loading-symptoms.md)
+routes each to its cause, and holds the restart-before-structural-diagnosis
+rule.

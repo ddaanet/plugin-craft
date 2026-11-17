@@ -1,6 +1,6 @@
 ---
 name: plugin-creation
-description: "Take a new or freshly extracted repository to a working Claude Code plugin in order — gitlore memory, then `/plugin-dev:create-plugin`, then the vendored `claude-plugin-dev` toolkit and its dogfood launcher — with a script reporting the first missing step. Use when starting a plugin repo, extracting a plugin from another repo, or about to load a plugin under development with `--plugin-dir` or a hand-written PATH entry. Not for a release (`toolkit-release`) or stale loaded code (`verifying-plugin-changes`)."
+description: "Take a new or freshly extracted repository to a working Claude Code plugin in order — gitlore memory, then `/plugin-dev:create-plugin`, then the vendored `claude-plugin-dev` toolkit and its dogfood launcher — with a script reporting the first missing step. Use when starting a plugin repo, extracting a plugin from another repo, about to load a plugin under development with `--plugin-dir` or a hand-written PATH entry, an install aborting on a submodule clone, or a settings key rejected as unrecognized. Not for a release (`toolkit-release`) or stale loaded code (`verifying-plugin-changes`)."
 ---
 
 # Creating a plugin repository
@@ -91,6 +91,8 @@ where the step text says otherwise.
 - **`memory-url`** — the `gitlore-memory` url in `.gitmodules` must be an
   absolute https url. An ssh url is rewritten by the agent. A placeholder is a
   decision: no public memory remote exists yet, so ask whether to create one.
+  Why a relative or ssh url aborts an installer's clone is in
+  [references/install-and-config.md](references/install-and-config.md).
 - **`origin`** — a GitHub remote is outward-facing: a decision.
 - **`python`** — a `warn`, never a block. See below.
 
@@ -116,6 +118,10 @@ release is the README's Conventions and a bare `just release`, with no bump
 argument. A release on the agent's own initiative risks a classifier denial, so
 wait for my human partner to name it, and use `toolkit-release` if it goes
 wrong. Code that looks stale after an edit is `verifying-plugin-changes`.
+
+A plugin option written to `settings.json` is rejected as an unrecognized
+field unless nested under `pluginConfigs`; the slot and the install-abort
+symptoms are in [references/install-and-config.md](references/install-and-config.md).
 
 If a mounted memory tier holds an `owned-projects.md`, add the new repo's row
 to it, committed through the memory gate like any memory edit; a sibling's

@@ -67,8 +67,15 @@ plugin-agent frontmatter are dropped the same way.
     trusted through an ancestor never shows a dialog yet fails this check.
     Sources `plugin`, `policySettings`, `built-in`, `bundled`, `userSettings`
     and `flagSettings` are exempt; a project's `.claude/agents/` is not. The
-    debug log says `Skipping frontmatter hooks for agent '…'`; the UI says
-    nothing.
+    debug log says `Skipping frontmatter hooks for agent '…'` and the
+    telemetry event is `tengu_agent_hooks_origin_untrusted` (still in the CC
+    2.1.283 binary, which places the gate and not the debug wording); the UI says
+    nothing. **Remedy:** write
+    `projects["<exact project path>"].hasTrustDialogAccepted` true in
+    `~/.claude.json` and restart; or move the definitions to `~/.claude/agents/`,
+    an exempt source; or register the hook in `.claude/settings.json`, where no
+    trust check applies. Do not look for a trust dialog to accept: under an
+    already-trusted parent there is none.
   - **No dispatch `name`.** A custom `name` on the Agent tool overwrites
     `agentType` with the name and demotes the definition to
     `customAgentType`; hooks register by resolving `agentType`, so none
@@ -85,7 +92,8 @@ is calling.
 
 | Failure | Identified agent | Any other caller |
 | --- | --- | --- |
-| Payload does not parse; `agent_type` absent, not a string or not the hook's agent | n/a: not identified | exit 0, silent |
+| Payload empty (read failed, §4) | n/a: not identified | exit 1 and one stderr line |
+| Payload non-empty but does not parse; `agent_type` absent, not a string or not the hook's agent | n/a: not identified | exit 0, silent |
 | Interpreter missing or exits other than 0 or 2 (not a signal death, row below); module missing or unreadable (test readability first: python3 exits 2 on a script it cannot open, which reads as a block) | exit 2, reason on stderr | exit 0, silent |
 | Interpreter killed by a signal (status above 128; an OOM kill is 137) | exit 2 | exit 1 and one stderr line: a visible hook error that blocks nothing |
 | `tool_input` missing or mistyped, no project directory, any exception in the module | exit 2, reason on stderr | not reached |

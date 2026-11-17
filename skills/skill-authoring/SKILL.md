@@ -1,6 +1,6 @@
 ---
 name: skill-authoring
-description: "How to write a skill that is found, triggered and able to reach its own scripts: description shape and its per-session cost, what `allowed-tools` actually does, which second-person forms the imperative rule targets, how a bundled script is invoked when the plugin env vars are absent, and why a conditional a script could decide stays out of agent-facing text. Use when writing or revising a skill, a plugin command or its frontmatter, when a skill body or a hook's `additionalContext` branches on something a script could check, or when a skill's description is not matching the moments it should. Complements `plugin-dev:skill-development`, which covers structure and progressive disclosure. For a skill whose edited body is not the one loading, see `plugin-craft:verifying-plugin-changes`."
+description: "How to write a skill that is found, triggered and able to reach its own scripts: description shape and its per-session cost, what `allowed-tools` actually does, which second-person forms the imperative rule targets, how a bundled script is invoked when the plugin env vars are absent, and why mechanical work and any conditional a script could decide stay out of agent-facing text. Use when writing or revising a skill, a plugin command or its frontmatter, choosing between a skill and a command, routing a plugin action a denial could stop, when a skill body or a hook's `additionalContext` branches on something a script could check, or when a skill's description is not matching the moments it should. Complements `plugin-dev:skill-development`, which covers structure and progressive disclosure. For a skill whose edited body is not the one loading, see `plugin-craft:verifying-plugin-changes`."
 ---
 
 # Skill authoring
@@ -81,7 +81,14 @@ post-compaction self`: it asserts the identity continuity that motivates
 writing the file at all, which `the post-compaction agent` drops. Do not
 "fix" it on a later grep sweep.
 
-## Conditionals a script can decide stay out of agent text
+## Mechanical work belongs in the harness
+
+First rule of skill design: a script or hook does the detection, branching and
+decisions and emits a structured result; the skill body is for judgement only.
+Splitting mechanical logic between body and harness also obscures the
+mechanism, since a reader cannot tell which half decides.
+
+### Conditionals a script can decide stay out of agent text
 
 Text a plugin puts in front of an agent to act on — a skill body, a probe
 directive, a hook's `additionalContext`, an instructing error message — carries
@@ -110,6 +117,21 @@ the three-branch version; the maintainer caught it.
 to check what `git status --porcelain` already reports. Have the bundled script
 print the instruction only when the tree is dirty, and the body say to run it
 and do what it prints.
+
+## Skill or command
+
+Self-triggering skill when the condition is mechanical and detectable; a
+command only for an action the user must consciously initiate. A command
+requires the user to know when to run it, so a missed trigger is always
+possible. A skill whose `description` names the trigger pattern invokes itself
+when the condition appears.
+
+## Routing an action a denial could stop
+
+Route a plugin action by what a denial would cost, not by whether one is
+possible. Where a denial would strand something unrepeatable — a user approval,
+an ordering guarantee — write an intent file and let a hook act on it. Where a
+denial costs one turn, have the agent make the call directly.
 
 ## Bundled scripts
 

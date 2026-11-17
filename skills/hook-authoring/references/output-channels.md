@@ -28,6 +28,26 @@
   exit code **2**, or with `--verbose` for other codes (a "hook error" label
   appears). `SessionStart` is non-blocking — continues regardless of exit code.
 
+**`hookSpecificOutput.sessionTitle` sets the session title, on `SessionStart`
+and `UserPromptSubmit` only** (CC 2.1.219, read from the binary 2026-07-24): no
+other event's output schema declares the field. The value is a string with
+control characters stripped and truncated to 200 characters; it is ignored when
+it equals the current title and when the hook fires from a subagent or child
+session. The two events differ in durability: `UserPromptSubmit` persists it,
+appending a `custom-title` entry and updating the live title, while
+`SessionStart` only caches it in memory, and the session-storage flush writes
+the entry later. Hooks also receive the current title as `session_title`
+(`input-and-harness.md`).
+
+The title itself is the last `custom-title` entry in the session transcript
+(`{"type":"custom-title","customTitle":"…","sessionId":"…"}`), last one wins, and
+it takes precedence over the `ai-title` entry CC generates. `/rename <name>`
+(alias `/name`), the `-n, --name` flag and Ctrl+R in the picker write the same
+entry. A hook may append one to `transcript_path` itself, which takes effect on
+the next read or resume rather than live, and is worth it only from an event
+without the `sessionTitle` field. First verified on CC 2.1.150 (2026-05-25). The
+transcript format is `plugin-craft:session-transcripts`'s.
+
 **`PermissionDenied` observes an auto-mode denial but cannot speak to the
 model (CC 2.1.311, `claude -p`).** The hook fires, yet its `additionalContext`
 is dropped — absent from the transcript, unseen by the model — and its payload's
