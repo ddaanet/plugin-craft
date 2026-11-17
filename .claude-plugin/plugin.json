@@ -1,6 +1,6 @@
 {
   "name": "plugin-craft",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Building on the Claude Code harness: setting up a plugin repository, authoring and debugging hooks, writing skills, reading session transcripts, and verifying that the plugin code actually running is the code you just edited.",
   "author": {
     "name": "David Allouche",
