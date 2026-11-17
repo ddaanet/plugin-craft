@@ -12,9 +12,9 @@ failure, and no route around it is sanctioned.
 Cause: `--plugin-dir` marks the loaded directory's content sensitive on
 purpose, so `Write`, `Edit` and `NotebookEdit` there all get the hard failure,
 and retrying repeats the answer. Fix: relaunch with the plugin loaded through
-the toolkit's dogfood launcher, which loads a synced copy rather than the
-checkout, or without `--plugin-dir`: ask the user to relaunch that way, since
-only the user can. Meanwhile, as the error says, continue with work that does
+the toolkit's dogfood launcher, which loads a copy that only `just dogfood`
+refreshes rather than the checkout, or without `--plugin-dir`: ask the user to
+relaunch that way, since only the user can. Meanwhile, as the error says, continue with work that does
 not need the write; if the write is essential, stop and tell the user. Do not
 look for another way to write the file.
 
@@ -40,8 +40,8 @@ settings allow rules, and that check returns `ask` for an inline root. So:
 
 When edits to a plugin tree prompt despite allow rules, check the launch for
 `--plugin-dir` first (a `.bin/claude` shim, a `just claude` recipe) before
-touching permissions. The fix is the one above: load a synced copy and edit the
-source tree, or relaunch without the flag.
+touching permissions. The fix is the one above: load the dogfood copy, edit the
+source tree and promote with `just dogfood`, or relaunch without the flag.
 
 ## Auto mode: `classifier gave no verdict (it skipped this action)`
 
@@ -50,7 +50,7 @@ of its own: it is the `server_call_skipped` reason, which the hard-failure text
 carries, and the same reason has a one-retry variant when the classifier
 expected the call not to need a review (read in the CC 2.1.310 bundle). Act on
 the rest of the message as the scope paragraph says: with `This is a hard
-failure`, follow it, and the fix is the synced copy above; with a one-retry
+failure`, follow it, and the fix is the dogfood copy above; with a one-retry
 text, retry once. A `Write` under a `--plugin-dir` directory got the
 hard-failure text with this reason on its first attempt (CC 2.1.311, one run).
 That the inline-root path check is what the server reports as this reason is

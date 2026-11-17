@@ -21,10 +21,13 @@ Even after a refresh, only a *new* session picks it up — agent definitions in
 particular are cached at session start.
 
 **Fix:** ship via a **version bump**, not just a push. To develop against current
-`main`, load the plugin through the toolkit's dogfood launcher instead of the
-cache. `--plugin-dir` serves only a session that edits nothing in the loaded
-tree: every edit under it prompts or fails, see
-[references/plugin-dir-edits.md](references/plugin-dir-edits.md).
+`main` with the toolkit vendored, load the plugin through its dogfood launcher
+instead of the cache. The launcher loads a copy, not the checkout, and only
+`just dogfood` refreshes it: on that route run `just dogfood` after each edit,
+before any reload or relaunch below can pick the edit up. `--plugin-dir` serves
+only a session that edits nothing in the loaded tree: every edit under it
+prompts or fails. Without the toolkit, relaunch without `--plugin-dir` to edit,
+see [references/plugin-dir-edits.md](references/plugin-dir-edits.md).
 
 The newest directory in the cache is not necessarily what runs: installs are
 pinned per scope, and a release reaches each project lazily. Open

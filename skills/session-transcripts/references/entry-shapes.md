@@ -67,13 +67,15 @@ block. It starts with the skill's own first line (for example
 this skill:`, so a text-prefix filter misses native skill bodies. A native
 body can exceed 100 KB.
 
-`isMeta:true` is the robust flag for all harness-injected non-conversation
-content: skill bodies, `<local-command-caveat>`, and `## Context` or
-`## Context Usage` injections. Genuine user prompts never carry it. Verified
-across 20+ real transcripts 2026-05-23. The compact summary is the exception:
-a harness-written `type:"user"` entry without `isMeta` (see Compaction), so a
-filter selecting genuine prompts excludes `isCompactSummary: true` as well as
-`isMeta: true`.
+`isMeta:true` marks harness-injected content: skill bodies,
+`<local-command-caveat>`, and `## Context` or `## Context Usage` injections.
+Genuine user prompts never carry it. Verified across 20+ real transcripts
+2026-05-23. It does not mark every `type:"user"` entry that is not a prompt:
+tool results and other harness-written entries, the compact summary among them
+(see Compaction), carry no `isMeta`. A filter selecting genuine prompts
+therefore excludes `isMeta: true` and `isCompactSummary: true`, keeps only a
+string `content`, and is checked against real transcripts for what it still
+passes.
 
 ## `/compact` records twice
 
