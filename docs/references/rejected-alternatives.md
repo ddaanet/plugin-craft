@@ -27,3 +27,5 @@ Part of `docs/design.md`: one entry per rejected alternative, carrying the argum
 **Treating the tier's existing `additionalContext` sentence as covering a deny.** It claimed only the weaker thing — delivery when an allowed call then fails — and a blocked call never runs, so it is not a call that failed. A hook written on that assumption works with its teaching silently dropped.
 
 **Letting review alone enforce D-6.** Rejected for the reason stated in D-6; retained here because "a careful reviewer will catch it" is the alternative that keeps suggesting itself.
+
+**A separate skill for mods.** A mod is declared in `hooks/hooks.json` beside ordinary hooks and its events include the classic hook events, so the moment it is written in is the hook-authoring moment. A skill of its own would add a description paid every session for two facts; one reference behind `hook-authoring`, routed to by a clause in its description, carries them. **Reopen-if** the mods material outgrows one reference.

@@ -131,6 +131,25 @@ as a `SessionStart(compact)` hook can. That payload carries no `model` where
 `startup` does; the field is optional in the base schema, so read it
 defensively (2.1.219).
 
+**`SessionStart(resume)` fires with the resuming process's cwd, before the
+session moves** (CC 2.1.220). Resuming a conversation of repo A from a pane
+running in repo B delivers B's `cwd` to that hook; the harness then moves the
+session into A's project dir, so from the first `UserPromptSubmit` on, the
+transcript, `CLAUDE_PROJECT_DIR` and every per-call hook see A. A hook that
+samples an environment fact once at `SessionStart` and parks it samples it at
+the one moment the cwd does not belong to the session, and the wrong value
+stays silent until a consumer refuses. Two hooks in one session naming
+different repos is the signature, and it is legitimate rather than a race.
+Resolve per call, in the hook that needs the value, from that hook's own payload
+`cwd`; a value the agent's Bash needs is injected at call time with
+`PreToolUse` and `updatedInput`, as
+`../../skill-authoring/references/bundled-scripts.md` describes. This differs
+from cwd drift, where the session leaves its launch repo and the per-call
+resolution reports it. A session id with no transcript is not evidence of a
+bug: the `/resume` picker runs in a session of its own, which may be minted,
+used only to pick and abandoned, leaving hook-written state behind an empty
+transcript or one holding only a `custom-title` entry.
+
 **How to apply:** when a hook needs the project/worktree root, prefer
 `CLAUDE_PROJECT_DIR` where the hook environment sets it; otherwise derive it
 from the on-disk `.git` linkage starting at `.cwd` — don't expect a root field

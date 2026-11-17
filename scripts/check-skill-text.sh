@@ -47,6 +47,8 @@ slugs="$slugs|plugin-recurse-clone|project-hooks-launch-dir|cc-rules-paths-loadi
 slugs="$slugs|settings-json-unknown-field-validator"
 slugs="$slugs|subagent-skips-at-import-expansion"
 slugs="$slugs|verify-restart-before-structural-diagnosis"
+slugs="$slugs|frontmatter-hooks-trust-key-exact|session-title-customtitle"
+slugs="$slugs|cc-mods-api|cc-mods-driving-commands"
 
 # Checked on every line, code included. The wikilink pattern is in the awk
 # program below, since it applies to the line with code removed.

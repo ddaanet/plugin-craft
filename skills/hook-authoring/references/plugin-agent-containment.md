@@ -67,8 +67,15 @@ plugin-agent frontmatter are dropped the same way.
     trusted through an ancestor never shows a dialog yet fails this check.
     Sources `plugin`, `policySettings`, `built-in`, `bundled`, `userSettings`
     and `flagSettings` are exempt; a project's `.claude/agents/` is not. The
-    debug log says `Skipping frontmatter hooks for agent '…'`; the UI says
-    nothing.
+    debug log says `Skipping frontmatter hooks for agent '…'` and the
+    telemetry event is `tengu_agent_hooks_origin_untrusted` (still in the CC
+    2.1.283 binary, which places the gate and not the debug wording); the UI says
+    nothing. **Remedy:** write
+    `projects["<exact project path>"].hasTrustDialogAccepted` true in
+    `~/.claude.json` and restart; or move the definitions to `~/.claude/agents/`,
+    an exempt source; or register the hook in `.claude/settings.json`, where no
+    trust check applies. Do not look for a trust dialog to accept: under an
+    already-trusted parent there is none.
   - **No dispatch `name`.** A custom `name` on the Agent tool overwrites
     `agentType` with the name and demotes the definition to
     `customAgentType`; hooks register by resolving `agentType`, so none

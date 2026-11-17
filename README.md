@@ -24,9 +24,9 @@ each, the `PreToolUse` permission pipeline. It teaches a deny as splitting three
 ways by audience — the verdict on `permissionDecisionReason`, the recovery on
 `additionalContext`, one line on `systemMessage` — because `additionalContext`
 is delivered on a deny, not only when an allowed call then fails, and a blocked
-call never runs. Three reference files sit behind it, routed to by what you
+call never runs. Four reference files sit behind it, routed to by what you
 arrive holding; one covers containing a plugin's own agents, whose frontmatter
-hooks Claude Code drops.
+hooks Claude Code drops, and one covers mods, a plugin's JS/TS hooks module.
 
 **`skill-authoring`** — what makes a skill findable and self-sufficient:
 description shape and its per-session cost, what `allowed-tools` grants, which

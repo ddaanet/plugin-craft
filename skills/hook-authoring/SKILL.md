@@ -1,6 +1,6 @@
 ---
 name: hook-authoring
-description: "What a Claude Code hook receives on stdin and what its stdout JSON can actually do — the control surface, the three output channels and their audiences, how a `PreToolUse` decision meets the permission pipeline, and how to contain a plugin's own agents. Use when writing or debugging a hook script, choosing between `systemMessage`, `additionalContext` and stderr, working out why a block, a rewrite or injected text did not land, or when a plugin agent's frontmatter `hooks:` never fire. Complements `plugin-dev:hook-development`, which covers configuration and the event basics; this covers the payload fields and channel behaviour it omits. Not a style guide for hook message wording."
+description: "What a Claude Code hook receives on stdin and what its stdout JSON can actually do — the control surface, the three output channels and their audiences, how a `PreToolUse` decision meets the permission pipeline, and how to contain a plugin's own agents. Use when writing or debugging a hook script, choosing between `systemMessage`, `additionalContext` and stderr, working out why a block, a rewrite or injected text did not land, or when a plugin agent's frontmatter `hooks:` never fire. Also covers writing or debugging a mod: a plugin JS/TS hooks module driving `/clear`, `/compact`, `/rename` or a continuation. Complements `plugin-dev:hook-development`, which covers configuration and the event basics; this covers the payload fields and channel behaviour it omits. Not a style guide for hook message wording."
 ---
 
 ## 1 · The control surface: no hook injects a tool call
@@ -132,3 +132,11 @@ Route user-facing notices through `systemMessage`, not stderr-on-exit-0 and **no
   that fails open until the caller is identified and closed after, the
   `SessionStart` self-check and the agent-opening tripwire** →
   `references/plugin-agent-containment.md`.
+- **A mod (`"modules"` in `hooks.json`, `register`, the `$` API), a mod driving
+  `/clear`, `/compact` or `/rename` plus a continuation, `called from a
+  classic.Stop hook`, `hooks module did not load`, `claude plugin test`** →
+  `references/mods.md`.
+- **A session-start value naming the wrong repo on resume, or two hooks in one
+  session naming different repos** → `references/input-and-harness.md`.
+- **Setting the session title from a hook (`sessionTitle`), the `custom-title`
+  entry** → `references/output-channels.md` §1.
